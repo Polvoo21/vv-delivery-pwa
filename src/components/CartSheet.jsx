@@ -1,6 +1,7 @@
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { getUpsellProducts } from "../data/menu";
 import { calculateCartTotals, formatPrice } from "../utils/price";
+import { useSwipeDismiss } from "../utils/useSwipeDismiss";
 
 function itemMeta(item) {
   const parts = [];
@@ -25,11 +26,16 @@ export default function CartSheet({
 }) {
   const totals = calculateCartTotals(cart, promo, offer);
   const upsell = getUpsellProducts();
+  const swipe = useSwipeDismiss(onClose);
 
   return (
     <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Корзина">
       <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть корзину" />
-      <section className="bottom-sheet cart-sheet">
+      <section
+        className={`bottom-sheet cart-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        style={swipe.style}
+        {...swipe.bind}
+      >
         <div className="sheet-grabber" />
         <div className="sheet-header">
           <div>

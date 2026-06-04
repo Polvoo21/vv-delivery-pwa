@@ -1,4 +1,4 @@
-const CACHE_VERSION = "vv-delivery-mvp-v1.0.0";
+const CACHE_VERSION = "vv-delivery-mvp-v1.1.0";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -76,11 +76,42 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url || "/";
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       const openClient = clientList.find((client) => "focus" in client);
       if (openClient) return openClient.focus();
-      return clients.openWindow("/");
+      return clients.openWindow(targetUrl);
+    })
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let data = {};
+
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {
+      body: event.data?.text()
+    };
+  }
+
+  const title = data.title || "Вместе Вкуснее";
+  const body = data.body || "Статус заказа обновлён";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: data.orderId ? `vv-order-${data.orderId}` : "vv-order-status",
+      renotify: true,
+      data: {
+        url: data.url || "/",
+        orderId: data.orderId || null,
+        status: data.status || null
+      }
     })
   );
 });

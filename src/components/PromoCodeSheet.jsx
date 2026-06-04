@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Percent, X } from "lucide-react";
 import { PROMO_CODES } from "../data/config";
+import { useSwipeDismiss } from "../utils/useSwipeDismiss";
 
 export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
   const [value, setValue] = useState("");
   const [status, setStatus] = useState("");
+  const swipe = useSwipeDismiss(onClose);
 
   function applyPromo() {
     const normalized = value.trim().toUpperCase().replace("ВВ", "VV");
@@ -34,7 +36,11 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
   return (
     <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Промокод">
       <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть промокод" />
-      <section className="bottom-sheet compact-sheet">
+      <section
+        className={`bottom-sheet compact-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        style={swipe.style}
+        {...swipe.bind}
+      >
         <div className="sheet-grabber" />
         <div className="sheet-header">
           <div>

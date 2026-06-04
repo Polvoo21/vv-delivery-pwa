@@ -1,3 +1,5 @@
+import { saveOrder } from "./lib/orders-store.js";
+
 const json = (statusCode, payload) => ({
   statusCode,
   headers: {
@@ -189,8 +191,19 @@ export const handler = async (event) => {
       });
     }
 
+    let savedOrder = null;
+    try {
+      savedOrder = await saveOrder({
+        ...order,
+        telegramMessageId: telegramData.result?.message_id || null
+      });
+    } catch (error) {
+      console.error("Order was sent to Telegram but was not saved to admin storage", error);
+    }
+
     return json(200, {
-      ok: true
+      ok: true,
+      orderId: savedOrder?.id || null
     });
   } catch {
     return json(502, {

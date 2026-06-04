@@ -1,6 +1,7 @@
 import { Bell, History, LogOut, MapPin, Phone, Trash2, UserRound, X } from "lucide-react";
 import { RESTAURANT } from "../data/config";
 import { formatPrice } from "../utils/price";
+import { useSwipeDismiss } from "../utils/useSwipeDismiss";
 
 export default function ProfileSheet({
   customer,
@@ -10,13 +11,18 @@ export default function ProfileSheet({
   onTestNotification,
   onClearData
 }) {
+  const swipe = useSwipeDismiss(onClose);
   const displayName = customer.name || "Гость";
   const displayPhone = customer.phone || "Телефон появится после заказа";
 
   return (
     <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Личный кабинет">
       <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть профиль" />
-      <section className="bottom-sheet profile-sheet">
+      <section
+        className={`bottom-sheet profile-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        style={swipe.style}
+        {...swipe.bind}
+      >
         <div className="sheet-grabber" />
         <div className="sheet-header">
           <div>

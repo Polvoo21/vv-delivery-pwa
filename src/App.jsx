@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AddressScreen from "./components/AddressScreen";
+import AdminApp from "./components/AdminApp";
 import CartSheet from "./components/CartSheet";
 import CheckoutSheet from "./components/CheckoutSheet";
 import HomeScreen from "./components/HomeScreen";
@@ -25,7 +26,7 @@ function cloneInitialData() {
   return JSON.parse(JSON.stringify(initialAppData));
 }
 
-export default function App() {
+function ClientApp() {
   const [data, setData] = useState(() => loadAppData());
   const [showSplash, setShowSplash] = useState(true);
   const [screen, setScreen] = useState(() => (loadAppData().fulfillment.address ? "home" : "address"));
@@ -151,7 +152,7 @@ export default function App() {
     setActiveSheet("checkout");
   }
 
-  function handleSuccessfulOrder(order) {
+  function handleSuccessfulOrder(order, responseData = {}) {
     const orderTime = new Date().toLocaleString("ru-RU", {
       day: "2-digit",
       month: "2-digit",
@@ -168,11 +169,11 @@ export default function App() {
       cart: [],
       orders: [
         {
-          id: String(Date.now()).slice(-6),
+          id: responseData.orderId || String(Date.now()).slice(-6),
           time: orderTime,
           total: order.total,
           mode: order.mode,
-          status: "Отправлен"
+          status: "Принят"
         },
         ...current.orders
       ].slice(0, 10)
@@ -288,4 +289,8 @@ export default function App() {
       <Toast message={toast} />
     </>
   );
+}
+
+export default function App() {
+  return window.location.pathname.startsWith("/admin") ? <AdminApp /> : <ClientApp />;
 }

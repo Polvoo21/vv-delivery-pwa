@@ -3,6 +3,8 @@ import { Banknote, CreditCard, MapPin, Send, X } from "lucide-react";
 import { RESTAURANT } from "../data/config";
 import { calculateCartTotals, formatPrice } from "../utils/price";
 import { hasErrors, normalizePhone, validateCheckout } from "../utils/validators";
+import { useSwipeDismiss } from "../utils/useSwipeDismiss";
+import { subscribeForOrderPush } from "../utils/notifications";
 
 const PAYMENT_OPTIONS = [
   { id: "cash", label: "наличными", icon: Banknote },
@@ -19,6 +21,7 @@ export default function CheckoutSheet({
   onSubmit
 }) {
   const totals = useMemo(() => calculateCartTotals(cart, promo, offer), [cart, offer, promo]);
+  const swipe = useSwipeDismiss(onClose);
   const [form, setForm] = useState({
     name: customer.name || "",
     phone: customer.phone || "",
@@ -89,15 +92,23 @@ export default function CheckoutSheet({
     }
 
     setSending(true);
-    setStatus("Отправляем заказ...");
+    setStatus("Включаем уведомления о статусе...");
 
     try {
+      const push = await subscribeForOrderPush();
+      const orderWithPush = {
+        ...order,
+        pushSubscription: push.ok ? push.subscription : null
+      };
+
+      setStatus(push.ok ? "Отправляем заказ и подключаем push..." : "Отправляем заказ...");
+
       const response = await fetch("/.netlify/functions/send-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(order)
+        body: JSON.stringify(orderWithPush)
       });
 
       const data = await response.json().catch(() => ({}));
@@ -105,8 +116,8 @@ export default function CheckoutSheet({
         throw new Error(data.error || "Заказ не отправился");
       }
 
-      setStatus("Заказ отправлен");
-      onSubmit(order);
+      setStatus(push.ok ? "Заказ отправлен. Уведомления о статусе включены." : "Заказ отправлен");
+      onSubmit(orderWithPush, data);
     } catch (error) {
       setStatus(error.message || "Не удалось отправить заказ");
     } finally {
@@ -117,7 +128,11 @@ export default function CheckoutSheet({
   return (
     <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Оформление заказа">
       <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть оформление" />
-      <section className="bottom-sheet checkout-sheet">
+      <section
+        className={`bottom-sheet checkout-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        style={swipe.style}
+        {...swipe.bind}
+      >
         <div className="sheet-grabber" />
         <div className="sheet-header">
           <div>
