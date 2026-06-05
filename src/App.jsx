@@ -240,6 +240,7 @@ function ClientApp() {
 
       {activeSheet === "cart" ? (
         <CartSheet
+          key="cart"
           cart={data.cart}
           promo={data.promo}
           offer={data.offer}
@@ -255,6 +256,7 @@ function ClientApp() {
 
       {activeSheet === "promo" ? (
         <PromoCodeSheet
+          key="promo"
           promo={data.promo}
           offer={data.offer}
           onApply={applyPromo}
@@ -264,6 +266,7 @@ function ClientApp() {
 
       {activeSheet === "checkout" ? (
         <CheckoutSheet
+          key="checkout"
           cart={data.cart}
           promo={data.promo}
           offer={data.offer}
@@ -276,6 +279,7 @@ function ClientApp() {
 
       {activeSheet === "profile" ? (
         <ProfileSheet
+          key="profile"
           customer={data.customer}
           fulfillment={data.fulfillment}
           orders={data.orders}
@@ -285,7 +289,7 @@ function ClientApp() {
         />
       ) : null}
 
-      <InfoSheet story={infoStory} onClose={() => setInfoStory(null)} />
+      <InfoSheet key={infoStory?.id || "info"} story={infoStory} onClose={() => setInfoStory(null)} />
       <Toast message={toast} />
     </>
   );

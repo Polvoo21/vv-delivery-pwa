@@ -37,6 +37,7 @@ function parseBody(body) {
 
 function validateOrder(order) {
   const errors = [];
+  const phoneDigits = String(order.customerPhone || "").replace(/\D/g, "");
 
   if (!order.customerName || !String(order.customerName).trim()) {
     errors.push("customerName обязателен");
@@ -44,6 +45,8 @@ function validateOrder(order) {
 
   if (!order.customerPhone || !String(order.customerPhone).trim()) {
     errors.push("customerPhone обязателен");
+  } else if (phoneDigits.length !== 11 || !phoneDigits.startsWith("7")) {
+    errors.push("customerPhone должен быть в формате +7 (999) 999-99-99");
   }
 
   if (!Array.isArray(order.items)) {

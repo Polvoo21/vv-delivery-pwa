@@ -8,8 +8,28 @@ import { subscribeForOrderPush } from "../utils/notifications";
 
 const PAYMENT_OPTIONS = [
   { id: "cash", label: "наличными", icon: Banknote },
-  { id: "card", label: "картой при получении", icon: CreditCard }
+  { id: "card", label: "картой при получении", icon: CreditCard },
+  { id: "online", label: "онлайн картой", icon: CreditCard }
 ];
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function formatCardNumber(value) {
+  return String(value || "")
+    .replace(/\D/g, "")
+    .slice(0, 16)
+    .replace(/(.{4})/g, "$1 ")
+    .trim();
+}
+
+function formatCardExpiry(value) {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+}
+
+function formatCardCvc(value) {
+  return String(value || "").replace(/\D/g, "").slice(0, 3);
+}
 
 export default function CheckoutSheet({
   cart,
@@ -24,9 +44,14 @@ export default function CheckoutSheet({
   const swipe = useSwipeDismiss(onClose);
   const [form, setForm] = useState({
     name: customer.name || "",
-    phone: customer.phone || "",
+    phone: customer.phone ? normalizePhone(customer.phone) : "",
     comment: "",
     payment: "cash"
+  });
+  const [card, setCard] = useState({
+    number: "",
+    expiry: "",
+    cvc: ""
   });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("");
@@ -36,7 +61,7 @@ export default function CheckoutSheet({
     setForm((current) => ({
       ...current,
       name: customer.name || "",
-      phone: customer.phone || ""
+      phone: customer.phone ? normalizePhone(customer.phone) : ""
     }));
   }, [customer.name, customer.phone]);
 
@@ -49,6 +74,37 @@ export default function CheckoutSheet({
       ...current,
       [key === "name" ? "customerName" : key === "phone" ? "customerPhone" : key]: ""
     }));
+  }
+
+  function updateCardField(key, value) {
+    const formatters = {
+      number: formatCardNumber,
+      expiry: formatCardExpiry,
+      cvc: formatCardCvc
+    };
+
+    setCard((current) => ({
+      ...current,
+      [key]: formatters[key](value)
+    }));
+    setErrors((current) => ({
+      ...current,
+      payment: ""
+    }));
+  }
+
+  function validateFakeOnlinePayment() {
+    if (form.payment !== "online") return "";
+
+    const cardDigits = card.number.replace(/\D/g, "");
+    const expiryDigits = card.expiry.replace(/\D/g, "");
+    const cvcDigits = card.cvc.replace(/\D/g, "");
+
+    if (cardDigits.length !== 16 || expiryDigits.length !== 4 || cvcDigits.length !== 3) {
+      return "Для тестовой онлайн-оплаты заполните карту полностью.";
+    }
+
+    return "";
   }
 
   async function submitOrder() {
@@ -64,7 +120,12 @@ export default function CheckoutSheet({
       customerName: form.name.trim(),
       customerPhone: form.phone.trim(),
       orderComment: form.comment.trim(),
-      payment: form.payment === "cash" ? "наличными" : "картой при получении",
+      payment:
+        form.payment === "cash"
+          ? "наличными"
+          : form.payment === "online"
+            ? "онлайн картой (тестовая оплата)"
+            : "картой при получении",
       discount: totals.discountState.active,
       discountLabel: totals.discountState.label,
       promoCode: promo?.active ? promo.code : "",
@@ -85,6 +146,8 @@ export default function CheckoutSheet({
     };
 
     const nextErrors = validateCheckout(order);
+    const paymentError = validateFakeOnlinePayment();
+    if (paymentError) nextErrors.payment = paymentError;
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) {
       setStatus("Проверьте поля оформления.");
@@ -92,9 +155,14 @@ export default function CheckoutSheet({
     }
 
     setSending(true);
-    setStatus("Включаем уведомления о статусе...");
+    setStatus(form.payment === "online" ? "Проводим тестовую онлайн-оплату..." : "Включаем уведомления о статусе...");
 
     try {
+      if (form.payment === "online") {
+        await wait(900);
+        setStatus("Оплата подтверждена. Включаем уведомления о статусе...");
+      }
+
       const push = await subscribeForOrderPush();
       const orderWithPush = {
         ...order,
@@ -179,9 +247,11 @@ export default function CheckoutSheet({
           <input
             value={form.phone}
             onChange={(event) => updateField("phone", event.target.value)}
-            placeholder="+7"
+            onFocus={() => !form.phone && updateField("phone", "+7 ")}
+            placeholder="+7 (999) 999-99-99"
             inputMode="tel"
             autoComplete="tel"
+            maxLength={18}
           />
           {errors.customerPhone ? <small>{errors.customerPhone}</small> : null}
         </label>
@@ -211,6 +281,49 @@ export default function CheckoutSheet({
             );
           })}
         </div>
+        {errors.payment ? <small className="payment-error">{errors.payment}</small> : null}
+
+        {form.payment === "online" ? (
+          <div className="fake-payment-card">
+            <div>
+              <span>Тестовая онлайн-оплата</span>
+              <b>{card.number || "0000 0000 0000 0000"}</b>
+            </div>
+            <div className="fake-card-grid">
+              <label className="field">
+                <span>Номер карты</span>
+                <input
+                  value={card.number}
+                  onChange={(event) => updateCardField("number", event.target.value)}
+                  inputMode="numeric"
+                  placeholder="4242 4242 4242 4242"
+                  maxLength={19}
+                />
+              </label>
+              <label className="field">
+                <span>Срок</span>
+                <input
+                  value={card.expiry}
+                  onChange={(event) => updateCardField("expiry", event.target.value)}
+                  inputMode="numeric"
+                  placeholder="12/29"
+                  maxLength={5}
+                />
+              </label>
+              <label className="field">
+                <span>CVC</span>
+                <input
+                  value={card.cvc}
+                  onChange={(event) => updateCardField("cvc", event.target.value)}
+                  inputMode="numeric"
+                  placeholder="123"
+                  maxLength={3}
+                />
+              </label>
+            </div>
+            <p>Это демонстрация: деньги не списываются, заказ уйдёт как оплаченный онлайн.</p>
+          </div>
+        ) : null}
 
         <div className="checkout-total">
           <span>К оплате</span>
@@ -221,7 +334,11 @@ export default function CheckoutSheet({
           <Send size={18} />
           {sending ? "Отправляем..." : "Отправить заказ"}
         </button>
-        {status ? <p className={`sheet-status ${status === "Заказ отправлен" ? "ok" : ""}`}>{status}</p> : null}
+        {status ? (
+          <p className={`sheet-status ${status.includes("отправлен") || status.includes("подтверждена") ? "ok" : ""}`}>
+            {status}
+          </p>
+        ) : null}
       </section>
     </div>
   );

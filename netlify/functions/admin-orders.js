@@ -1,5 +1,6 @@
 import {
   assertAdminPassword,
+  closeOrder,
   initOrdersStore,
   listOrders,
   ORDER_STATUSES,
@@ -67,8 +68,8 @@ export const handler = async (event) => {
       });
     }
 
-    const { id, status } = parsed.value;
-    if (!id || !status) {
+    const { action, id, status } = parsed.value;
+    if (!id || (!status && action !== "close")) {
       return json(400, {
         ok: false,
         error: "Нужны id и status"
@@ -77,6 +78,15 @@ export const handler = async (event) => {
 
     try {
       initOrdersStore(event);
+      if (action === "close") {
+        const { order } = await closeOrder(id);
+        return json(200, {
+          ok: true,
+          order,
+          push: null
+        });
+      }
+
       const { order, rawOrder } = await updateOrderStatus(id, status);
       const push = await sendStatusPush(rawOrder);
       return json(200, {

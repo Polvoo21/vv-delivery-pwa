@@ -58,6 +58,7 @@ function publicOrder(order) {
     statusLabel: ORDER_STATUSES[order.status] || ORDER_STATUSES.accepted,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
+    archivedAt: order.archivedAt || null,
     mode: order.mode,
     address: order.address,
     entrance: order.entrance,
@@ -177,6 +178,29 @@ export async function listOrders() {
   );
 
   return orders.filter(Boolean).map(publicOrder);
+}
+
+export async function closeOrder(id) {
+  const store = getOrdersStore();
+  const order = await store.get(`order:${id}`, { type: "json" }).catch(() => null);
+
+  if (!order) {
+    const error = new Error("Заказ не найден");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const nextOrder = {
+    ...order,
+    archivedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  await store.setJSON(`order:${id}`, nextOrder);
+  return {
+    order: publicOrder(nextOrder),
+    rawOrder: nextOrder
+  };
 }
 
 export async function updateOrderStatus(id, status) {

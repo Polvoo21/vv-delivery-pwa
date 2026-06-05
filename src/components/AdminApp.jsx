@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Archive,
   Bike,
   BellRing,
   CheckCircle2,
@@ -114,6 +115,10 @@ function getOrderTotalByStatus(orders) {
   }));
 }
 
+function isActiveOrder(order) {
+  return !order.archivedAt;
+}
+
 function compactAddress(order) {
   const details = [
     order.entrance ? `подъезд ${order.entrance}` : "",
@@ -145,10 +150,12 @@ export default function AdminApp() {
   const [pushStatus, setPushStatus] = useState("");
   const [pushLoading, setPushLoading] = useState(false);
 
-  const stats = useMemo(() => getOrderTotalByStatus(orders), [orders]);
+  const activeOrders = useMemo(() => orders.filter(isActiveOrder), [orders]);
+  const archivedCount = orders.length - activeOrders.length;
+  const stats = useMemo(() => getOrderTotalByStatus(activeOrders), [activeOrders]);
   const revenue = useMemo(
-    () => orders.reduce((sum, order) => sum + Number(order.total || 0), 0),
-    [orders]
+    () => activeOrders.reduce((sum, order) => sum + Number(order.total || 0), 0),
+    [activeOrders]
   );
 
   useEffect(() => {
@@ -296,6 +303,49 @@ export default function AdminApp() {
     await verifyLogin(next);
   }
 
+  async function closeOrderCard(orderId) {
+    if (demoMode) {
+      setOrders((current) =>
+        current.map((order) =>
+          order.id === orderId ? { ...order, archivedAt: new Date().toISOString() } : order
+        )
+      );
+      return;
+    }
+
+    setError("");
+    const previousOrders = orders;
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId ? { ...order, archivedAt: new Date().toISOString() } : order
+      )
+    );
+
+    try {
+      const response = await fetch("/.netlify/functions/admin-orders", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password
+        },
+        body: JSON.stringify({
+          action: "close",
+          id: orderId
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || "Не удалось закрыть заказ");
+      }
+
+      setOrders((current) => current.map((order) => (order.id === orderId ? data.order : order)));
+    } catch (closeError) {
+      setOrders(previousOrders);
+      setError(closeError.message || "Не удалось закрыть заказ");
+    }
+  }
+
   async function setupAdminPush() {
     if (!password || pushLoading) return;
 
@@ -423,8 +473,10 @@ export default function AdminApp() {
       <section className="admin-hero">
         <div>
           <p className="eyebrow">Сегодня</p>
-          <h1>{orders.length} заказов</h1>
-          <span>Сумма в списке: {formatPrice(revenue)} ₽</span>
+          <h1>{activeOrders.length} активных</h1>
+          <span>
+            Сумма в работе: {formatPrice(revenue)} ₽{archivedCount ? ` · закрыто ${archivedCount}` : ""}
+          </span>
         </div>
         <div className="admin-hero-icon">
           <Send size={28} />
@@ -450,8 +502,8 @@ export default function AdminApp() {
           <span>{loading ? "Обновляем..." : "Смена статусов в один клик"}</span>
         </div>
 
-        {orders.length ? (
-          orders.map((order) => {
+        {activeOrders.length ? (
+          activeOrders.map((order) => {
             const StatusIcon = STATUS_ICONS[order.status] || CheckCircle2;
             return (
               <article className="admin-order-card" key={order.id}>
@@ -510,6 +562,10 @@ export default function AdminApp() {
                       {label}
                     </button>
                   ))}
+                  <button type="button" className="close-order" onClick={() => closeOrderCard(order.id)}>
+                    <Archive size={15} />
+                    Закрыть
+                  </button>
                 </div>
               </article>
             );
@@ -517,8 +573,12 @@ export default function AdminApp() {
         ) : (
           <div className="admin-empty">
             <PackageCheck size={34} />
-            <h3>Заказов пока нет</h3>
-            <p>Оформите тестовый заказ в приложении, и он появится здесь после отправки в Telegram.</p>
+            <h3>Активных заказов нет</h3>
+            <p>
+              {archivedCount
+                ? `Закрытые заказы скрыты из рабочего списка: ${archivedCount}.`
+                : "Оформите тестовый заказ в приложении, и он появится здесь после отправки в Telegram."}
+            </p>
           </div>
         )}
       </section>

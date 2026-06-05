@@ -92,10 +92,7 @@ img {
 .app-shell {
   overflow-y: auto;
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 122px;
-  background:
-    radial-gradient(circle at 12% 0, rgba(255, 122, 26, 0.14), transparent 34%),
-    radial-gradient(circle at 90% 18%, rgba(71, 99, 63, 0.16), transparent 28%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .splash-screen {
@@ -489,8 +486,10 @@ img {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0 10px;
-  background: linear-gradient(var(--bg) 72%, rgba(251, 243, 230, 0));
+  margin: calc(-12px - env(safe-area-inset-top, 0px)) -16px 14px;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+  background: var(--bg);
+  box-shadow: 0 10px 24px rgba(72, 54, 31, 0.06);
 }
 
 .address-button {
@@ -503,7 +502,7 @@ img {
   align-items: center;
   gap: 9px;
   padding: 9px 12px;
-  background: rgba(255, 255, 255, 0.78);
+  background: #fff;
   color: var(--ink);
   box-shadow: 0 10px 26px rgba(72, 54, 31, 0.08);
   text-align: left;
@@ -1145,6 +1144,7 @@ img {
   justify-content: center;
   align-items: flex-end;
   animation: sheetOverlayIn 180ms ease both;
+  touch-action: none;
 }
 
 .sheet-dim {
@@ -1182,11 +1182,13 @@ img {
   transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
   touch-action: pan-y;
+  transform: translate3d(0, 0, 0);
 }
 
 .bottom-sheet.is-dragging {
   transition: none;
   cursor: grabbing;
+  touch-action: none;
 }
 
 .bottom-sheet.is-closing {
@@ -1525,7 +1527,7 @@ img {
 
 .payment-options {
   display: grid;
-  grid-template-columns: 1fr 1.25fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 14px;
 }
@@ -1549,6 +1551,72 @@ img {
   border-color: rgba(71, 99, 63, 0.35);
   color: var(--green);
   background: var(--green-soft);
+}
+
+.payment-error {
+  display: block;
+  margin-top: 8px;
+  color: var(--terra);
+  font-weight: 800;
+}
+
+.fake-payment-card {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(71, 99, 63, 0.92), rgba(31, 41, 28, 0.96)),
+    #26341f;
+  color: #fff;
+  box-shadow: 0 16px 36px rgba(31, 41, 28, 0.2);
+}
+
+.fake-payment-card > div:first-child {
+  display: grid;
+  gap: 8px;
+}
+
+.fake-payment-card span,
+.fake-payment-card p {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.fake-payment-card b {
+  letter-spacing: 1px;
+  font-size: 19px;
+}
+
+.fake-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.54fr 0.44fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.fake-payment-card .field {
+  margin-top: 0;
+}
+
+.fake-payment-card .field span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fake-payment-card .field input {
+  min-height: 48px;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.fake-payment-card .field input::placeholder {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.fake-payment-card p {
+  margin: 12px 0 0;
+  line-height: 1.35;
 }
 
 .checkout-total {
@@ -1735,7 +1803,8 @@ img {
   }
 
   .field-grid,
-  .payment-options {
+  .payment-options,
+  .fake-card-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1749,10 +1818,7 @@ img {
   -webkit-overflow-scrolling: touch;
   padding: calc(env(safe-area-inset-top, 0px) + 18px) 18px calc(var(--safe-bottom) + 28px);
   color: #f6f1e8;
-  background:
-    radial-gradient(circle at 12% 0, rgba(255, 122, 26, 0.18), transparent 30%),
-    radial-gradient(circle at 88% 16%, rgba(71, 99, 63, 0.48), transparent 32%),
-    #11130f;
+  background: #11130f;
 }
 
 .admin-login {
@@ -1772,7 +1838,8 @@ img {
   gap: 14px;
   margin: -18px -18px 18px;
   padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 14px;
-  background: linear-gradient(#11130f 72%, rgba(17, 19, 15, 0));
+  background: #11130f;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
 }
 
 .admin-brand {
@@ -2118,7 +2185,7 @@ img {
 
 .admin-status-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin-top: 13px;
 }
@@ -2137,6 +2204,11 @@ img {
 .admin-status-actions button.active {
   color: #11130f;
   background: #fff0dc;
+}
+
+.admin-status-actions button.close-order {
+  color: #fff;
+  background: rgba(201, 110, 94, 0.72);
 }
 
 .admin-empty {
