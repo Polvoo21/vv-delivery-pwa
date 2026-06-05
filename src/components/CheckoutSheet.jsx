@@ -126,10 +126,17 @@ export default function CheckoutSheet({
   }
 
   return (
-    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Оформление заказа">
-      <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть оформление" />
+    <div
+      className={`sheet-overlay ${swipe.closing ? "is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Оформление заказа"
+    >
+      <button className="sheet-dim" type="button" onClick={swipe.close} aria-label="Закрыть оформление" />
       <section
-        className={`bottom-sheet checkout-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        className={`bottom-sheet checkout-sheet ${swipe.dragging ? "is-dragging" : ""} ${
+          swipe.closing ? "is-closing" : ""
+        }`}
         style={swipe.style}
         {...swipe.bind}
       >
@@ -139,7 +146,7 @@ export default function CheckoutSheet({
             <p className="eyebrow">Последний шаг</p>
             <h2>{fulfillment.mode === "pickup" ? "Самовывоз" : "Доставка"}</h2>
           </div>
-          <button className="sheet-icon-close" type="button" onClick={onClose} aria-label="Закрыть">
+          <button className="sheet-icon-close" type="button" onClick={swipe.close} aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

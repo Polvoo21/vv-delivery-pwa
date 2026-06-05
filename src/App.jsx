@@ -292,5 +292,25 @@ function ClientApp() {
 }
 
 export default function App() {
-  return window.location.pathname.startsWith("/admin") ? <AdminApp /> : <ClientApp />;
+  const isAdmin = window.location.pathname.startsWith("/admin");
+
+  useEffect(() => {
+    const manifest = document.querySelector('link[rel="manifest"]');
+    const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    const theme = document.querySelector('meta[name="theme-color"]');
+
+    if (isAdmin) {
+      document.title = "Вместе Вкуснее | Админка";
+      manifest?.setAttribute("href", "/admin-manifest.json");
+      appleTitle?.setAttribute("content", "ВВ Админ");
+      theme?.setAttribute("content", "#11130f");
+    } else {
+      document.title = "Вместе Вкуснее | Доставка";
+      manifest?.setAttribute("href", "/manifest.json");
+      appleTitle?.setAttribute("content", "ВВ Доставка");
+      theme?.setAttribute("content", "#47633f");
+    }
+  }, [isAdmin]);
+
+  return isAdmin ? <AdminApp /> : <ClientApp />;
 }

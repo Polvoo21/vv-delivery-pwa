@@ -91,6 +91,11 @@ function isLocalhost() {
   return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 }
 
+function adminErrorMessage(error) {
+  if (!error) return "Не удалось выполнить действие";
+  return error.details ? `${error.message}: ${error.details}` : error.message || "Не удалось выполнить действие";
+}
+
 function formatDate(value) {
   if (!value) return "сейчас";
   return new Intl.DateTimeFormat("ru-RU", {
@@ -128,14 +133,14 @@ function itemLine(item) {
 
 export default function AdminApp() {
   const demoRequested = new URLSearchParams(window.location.search).get("demo") === "1" && isLocalhost();
-  const [password, setPassword] = useState(() => {
-    return demoRequested ? "__local_demo__" : sessionStorage.getItem(PASSWORD_KEY) || "";
-  });
-  const [draftPassword, setDraftPassword] = useState("");
+  const savedPassword = demoRequested ? "" : sessionStorage.getItem(PASSWORD_KEY) || "";
+  const [password, setPassword] = useState(() => (demoRequested ? "__local_demo__" : ""));
+  const [draftPassword, setDraftPassword] = useState(savedPassword);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [demoMode, setDemoMode] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(Boolean(savedPassword));
 
   const stats = useMemo(() => getOrderTotalByStatus(orders), [orders]);
   const revenue = useMemo(
@@ -148,39 +153,87 @@ export default function AdminApp() {
       setDemoMode(true);
       setOrders(DEMO_ORDERS);
       setError("");
+      setCheckingSession(false);
       return;
     }
 
-    if (password) {
-      loadOrders(password);
+    const storedPassword = sessionStorage.getItem(PASSWORD_KEY) || "";
+    if (storedPassword) {
+      verifyLogin(storedPassword, { persist: false });
+    } else {
+      setCheckingSession(false);
     }
-  }, [demoRequested, password]);
+  }, [demoRequested]);
 
-  async function loadOrders(nextPassword = password) {
+  async function fetchOrders(nextPassword) {
+    const response = await fetch("/.netlify/functions/admin-orders", {
+      headers: {
+        "x-admin-password": nextPassword
+      }
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      const nextError = new Error(data.error || "Не удалось загрузить заказы");
+      nextError.status = response.status;
+      nextError.details = data.details;
+      nextError.name = data.name || "AdminRequestError";
+      throw nextError;
+    }
+
+    return data.orders || [];
+  }
+
+  async function verifyLogin(nextPassword, options = {}) {
+    const shouldPersist = options.persist !== false;
+
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/.netlify/functions/admin-orders", {
-        headers: {
-          "x-admin-password": nextPassword
-        }
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.error || "Не удалось загрузить заказы");
-      }
-
+      const nextOrders = await fetchOrders(nextPassword);
       setDemoMode(false);
-      setOrders(data.orders || []);
+      setOrders(nextOrders);
+      setPassword(nextPassword);
+      if (shouldPersist) {
+        sessionStorage.setItem(PASSWORD_KEY, nextPassword);
+      }
+      return true;
+    } catch (loginError) {
+      sessionStorage.removeItem(PASSWORD_KEY);
+      setPassword("");
+      setOrders([]);
+      setError(adminErrorMessage(loginError));
+      return false;
+    } finally {
+      setLoading(false);
+      setCheckingSession(false);
+    }
+  }
+
+  async function loadOrders(nextPassword = password) {
+    if (!nextPassword) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const nextOrders = await fetchOrders(nextPassword);
+      setDemoMode(false);
+      setOrders(nextOrders);
     } catch (fetchError) {
-      if (isLocalhost()) {
+      if (fetchError.status === 401) {
+        sessionStorage.removeItem(PASSWORD_KEY);
+        setPassword("");
+        setOrders([]);
+        setDraftPassword(nextPassword);
+        setError(adminErrorMessage(fetchError));
+      } else if (isLocalhost()) {
         setDemoMode(true);
         setOrders(DEMO_ORDERS);
         setError("Локальный демо-режим: Netlify Functions доступны после деплоя или через netlify dev.");
       } else {
-        setError(fetchError.message || "Не удалось загрузить заказы");
+        setError(adminErrorMessage(fetchError));
       }
     } finally {
       setLoading(false);
@@ -229,7 +282,7 @@ export default function AdminApp() {
     }
   }
 
-  function login(event) {
+  async function login(event) {
     event.preventDefault();
     const next = draftPassword.trim();
     if (!next) {
@@ -237,8 +290,7 @@ export default function AdminApp() {
       return;
     }
 
-    sessionStorage.setItem(PASSWORD_KEY, next);
-    setPassword(next);
+    await verifyLogin(next);
   }
 
   function logout() {
@@ -281,9 +333,9 @@ export default function AdminApp() {
                   placeholder="Введите пароль"
                 />
               </label>
-              <button className="primary-action" type="submit">
+              <button className="primary-action" type="submit" disabled={loading || checkingSession}>
                 <ShieldCheck size={18} />
-                Войти
+                {loading || checkingSession ? "Проверяем..." : "Войти"}
               </button>
             </form>
             {error ? <div className="admin-alert">{error}</div> : null}

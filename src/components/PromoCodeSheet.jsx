@@ -34,10 +34,17 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
   }
 
   return (
-    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Промокод">
-      <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть промокод" />
+    <div
+      className={`sheet-overlay ${swipe.closing ? "is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Промокод"
+    >
+      <button className="sheet-dim" type="button" onClick={swipe.close} aria-label="Закрыть промокод" />
       <section
-        className={`bottom-sheet compact-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        className={`bottom-sheet compact-sheet ${swipe.dragging ? "is-dragging" : ""} ${
+          swipe.closing ? "is-closing" : ""
+        }`}
         style={swipe.style}
         {...swipe.bind}
       >
@@ -47,7 +54,7 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
             <p className="eyebrow">Скидка</p>
             <h2>Промокод</h2>
           </div>
-          <button className="sheet-icon-close" type="button" onClick={onClose} aria-label="Закрыть">
+          <button className="sheet-icon-close" type="button" onClick={swipe.close} aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>

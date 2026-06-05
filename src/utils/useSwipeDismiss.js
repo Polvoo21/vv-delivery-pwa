@@ -1,10 +1,38 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function useSwipeDismiss(onDismiss, options = {}) {
-  const threshold = options.threshold || 92;
+  const closeDuration = options.closeDuration || 260;
+  const thresholdRatio = options.thresholdRatio || 0.5;
   const [offset, setOffset] = useState(0);
+  const [closing, setClosing] = useState(false);
   const gesture = useRef(null);
   const offsetRef = useRef(0);
+  const closeTimer = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) {
+        clearTimeout(closeTimer.current);
+      }
+    };
+  }, []);
+
+  function finishClose() {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+
+    setClosing(true);
+    const closeOffset = typeof window === "undefined" ? 720 : window.innerHeight + 80;
+    offsetRef.current = closeOffset;
+    setOffset(closeOffset);
+
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      onDismiss();
+    }, closeDuration);
+  }
 
   function reset() {
     gesture.current = null;
@@ -13,6 +41,7 @@ export function useSwipeDismiss(onDismiss, options = {}) {
   }
 
   function onPointerDown(event) {
+    if (closing) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
 
     gesture.current = {
@@ -20,6 +49,7 @@ export function useSwipeDismiss(onDismiss, options = {}) {
       startX: event.clientX,
       startY: event.clientY,
       startScrollTop: event.currentTarget.scrollTop || 0,
+      sheetHeight: event.currentTarget.getBoundingClientRect().height,
       dragging: false
     };
 
@@ -37,7 +67,7 @@ export function useSwipeDismiss(onDismiss, options = {}) {
     if (!current.dragging && !canPullDown) return;
 
     current.dragging = true;
-    offsetRef.current = Math.min(deltaY, 220);
+    offsetRef.current = Math.min(Math.max(deltaY, 0), current.sheetHeight + 80);
     setOffset(offsetRef.current);
   }
 
@@ -45,11 +75,11 @@ export function useSwipeDismiss(onDismiss, options = {}) {
     const current = gesture.current;
     if (!current || current.pointerId !== event.pointerId) return;
 
+    const threshold = Math.max(86, current.sheetHeight * thresholdRatio);
     if (current.dragging && offsetRef.current > threshold) {
       gesture.current = null;
       offsetRef.current = 0;
-      setOffset(0);
-      onDismiss();
+      finishClose();
       return;
     }
 
@@ -66,6 +96,8 @@ export function useSwipeDismiss(onDismiss, options = {}) {
     style: {
       transform: offset ? `translateY(${offset}px)` : undefined
     },
-    dragging: offset > 0
+    dragging: offset > 0 && !closing,
+    closing,
+    close: finishClose
   };
 }

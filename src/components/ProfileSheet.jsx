@@ -16,10 +16,17 @@ export default function ProfileSheet({
   const displayPhone = customer.phone || "Телефон появится после заказа";
 
   return (
-    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Личный кабинет">
-      <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть профиль" />
+    <div
+      className={`sheet-overlay ${swipe.closing ? "is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Личный кабинет"
+    >
+      <button className="sheet-dim" type="button" onClick={swipe.close} aria-label="Закрыть профиль" />
       <section
-        className={`bottom-sheet profile-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        className={`bottom-sheet profile-sheet ${swipe.dragging ? "is-dragging" : ""} ${
+          swipe.closing ? "is-closing" : ""
+        }`}
         style={swipe.style}
         {...swipe.bind}
       >
@@ -29,7 +36,7 @@ export default function ProfileSheet({
             <p className="eyebrow">Аккаунт</p>
             <h2>Личный кабинет</h2>
           </div>
-          <button className="sheet-icon-close" type="button" onClick={onClose} aria-label="Закрыть">
+          <button className="sheet-icon-close" type="button" onClick={swipe.close} aria-label="Закрыть">
             <X size={20} />
           </button>
         </div>
@@ -92,7 +99,7 @@ export default function ProfileSheet({
             <Trash2 size={18} />
             Очистить данные приложения
           </button>
-          <button type="button" onClick={onClose}>
+          <button type="button" onClick={swipe.close}>
             <LogOut size={18} />
             Закрыть кабинет
           </button>

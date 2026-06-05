@@ -1,4 +1,4 @@
-import { getStore } from "@netlify/blobs";
+import { connectLambda, getStore } from "@netlify/blobs";
 
 export const ORDER_STATUSES = {
   accepted: "Принят",
@@ -9,12 +9,34 @@ export const ORDER_STATUSES = {
 
 const INDEX_KEY = "orders-index";
 const MAX_ORDERS = 200;
+const STORE_NAME = "vv-orders";
+
+export function initOrdersStore(event) {
+  if (!event?.blobs) return;
+
+  try {
+    connectLambda(event);
+  } catch (error) {
+    console.warn("Netlify Blobs lambda context was not initialized", error);
+  }
+}
+
+function manualBlobOptions() {
+  const siteID = process.env.NETLIFY_BLOBS_SITE_ID || "";
+  const token = process.env.NETLIFY_BLOBS_TOKEN || "";
+
+  if (!siteID || !token) return null;
+
+  return {
+    name: STORE_NAME,
+    siteID,
+    token
+  };
+}
 
 function getOrdersStore() {
-  return getStore({
-    name: "vv-orders",
-    consistency: "strong"
-  });
+  const manualOptions = manualBlobOptions();
+  return manualOptions ? getStore(manualOptions) : getStore(STORE_NAME);
 }
 
 function makeOrderId() {

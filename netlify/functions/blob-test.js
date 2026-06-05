@@ -1,66 +1,57 @@
-import { getStore } from "@netlify/blobs";
+import { initOrdersStore, listOrders, saveOrder } from "./lib/orders-store.js";
 
 const json = (statusCode, payload) => ({
   statusCode,
   headers: {
     "Content-Type": "application/json; charset=utf-8"
   },
-  body: JSON.stringify(payload, null, 2)
+  body: JSON.stringify(payload)
 });
 
-const getErrorPayload = (error) => ({
-  message: error?.message || String(error),
-  name: error?.name || null,
-  stack: error?.stack || null
-});
+function makeTestOrder() {
+  const now = new Date().toISOString();
+
+  return {
+    mode: "pickup",
+    address: "Чебоксары, ул. Пирогова, 1Т",
+    customerName: "Blob Test",
+    customerPhone: "+7 000 000-00-00",
+    payment: "test",
+    total: 1,
+    createdAt: now,
+    orderComment: "Тестовая запись из /.netlify/functions/blob-test",
+    items: [
+      {
+        name: "Тестовая пицца",
+        qty: 1,
+        lineTotal: 1
+      }
+    ]
+  };
+}
 
 export const handler = async (event) => {
   try {
-    const store = getStore({
-      name: "vv-orders",
-      consistency: "strong"
-    });
-
-    if (event.httpMethod === "POST") {
-      const id = `test:${Date.now()}`;
-      const payload = {
-        id,
-        type: "blob-test",
-        message: "Тестовая запись в Netlify Blobs",
-        createdAt: new Date().toISOString()
-      };
-
-      await store.setJSON(id, payload);
-
-      const index = (await store.get("orders-index", { type: "json" }).catch(() => [])) || [];
-      const nextIndex = [id, ...index.filter((item) => item !== id)].slice(0, 50);
-      await store.setJSON("orders-index", nextIndex);
-
-      return json(200, {
-        ok: true,
-        message: "Тестовая запись сохранена",
-        id,
-        payload,
-        index: nextIndex
-      });
-    }
+    initOrdersStore(event);
 
     if (event.httpMethod === "GET") {
-      const index = (await store.get("orders-index", { type: "json" }).catch(() => [])) || [];
-      const items = await Promise.all(
-        index.map((id) =>
-          store.get(id, { type: "json" }).catch((error) => ({
-            id,
-            error: getErrorPayload(error)
-          }))
-        )
-      );
-
+      const orders = await listOrders();
       return json(200, {
         ok: true,
         store: "vv-orders",
-        index,
-        items
+        count: orders.length,
+        message: "Netlify Blobs доступны"
+      });
+    }
+
+    if (event.httpMethod === "POST") {
+      const order = await saveOrder(makeTestOrder());
+      return json(200, {
+        ok: true,
+        store: "vv-orders",
+        key: `order:${order.id}`,
+        orderId: order.id,
+        message: "Тестовая запись сохранена"
       });
     }
 
@@ -69,12 +60,12 @@ export const handler = async (event) => {
       error: "Method not allowed"
     });
   } catch (error) {
-    console.error("blob-test failed", error);
-
+    console.error("Blob test failed", error);
     return json(500, {
       ok: false,
-      error: "Netlify Blobs test failed",
-      details: getErrorPayload(error)
+      error: "Netlify Blobs недоступны",
+      details: error.message || String(error),
+      name: error.name || "Error"
     });
   }
 };

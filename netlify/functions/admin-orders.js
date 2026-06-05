@@ -1,4 +1,10 @@
-import { assertAdminPassword, listOrders, ORDER_STATUSES, updateOrderStatus } from "./lib/orders-store.js";
+import {
+  assertAdminPassword,
+  initOrdersStore,
+  listOrders,
+  ORDER_STATUSES,
+  updateOrderStatus
+} from "./lib/orders-store.js";
 import { sendStatusPush } from "./lib/push.js";
 
 const json = (statusCode, payload) => ({
@@ -34,16 +40,20 @@ export const handler = async (event) => {
 
   if (event.httpMethod === "GET") {
     try {
+      initOrdersStore(event);
       const orders = await listOrders();
       return json(200, {
         ok: true,
         statuses: ORDER_STATUSES,
         orders
       });
-    } catch {
+    } catch (error) {
+      console.error("Admin orders list failed", error);
       return json(500, {
         ok: false,
-        error: "Не удалось загрузить заказы"
+        error: "Не удалось загрузить заказы",
+        details: error.message || String(error),
+        name: error.name || "Error"
       });
     }
   }
@@ -66,6 +76,7 @@ export const handler = async (event) => {
     }
 
     try {
+      initOrdersStore(event);
       const { order, rawOrder } = await updateOrderStatus(id, status);
       const push = await sendStatusPush(rawOrder);
       return json(200, {
@@ -76,7 +87,9 @@ export const handler = async (event) => {
     } catch (error) {
       return json(error.statusCode || 500, {
         ok: false,
-        error: error.message || "Не удалось обновить заказ"
+        error: error.message || "Не удалось обновить заказ",
+        details: error.message || String(error),
+        name: error.name || "Error"
       });
     }
   }

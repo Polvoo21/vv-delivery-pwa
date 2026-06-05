@@ -29,10 +29,17 @@ export default function CartSheet({
   const swipe = useSwipeDismiss(onClose);
 
   return (
-    <div className="sheet-overlay" role="dialog" aria-modal="true" aria-label="Корзина">
-      <button className="sheet-dim" type="button" onClick={onClose} aria-label="Закрыть корзину" />
+    <div
+      className={`sheet-overlay ${swipe.closing ? "is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Корзина"
+    >
+      <button className="sheet-dim" type="button" onClick={swipe.close} aria-label="Закрыть корзину" />
       <section
-        className={`bottom-sheet cart-sheet ${swipe.dragging ? "is-dragging" : ""}`}
+        className={`bottom-sheet cart-sheet ${swipe.dragging ? "is-dragging" : ""} ${
+          swipe.closing ? "is-closing" : ""
+        }`}
         style={swipe.style}
         {...swipe.bind}
       >
@@ -48,7 +55,7 @@ export default function CartSheet({
                 <Trash2 size={18} />
               </button>
             ) : null}
-            <button type="button" onClick={onClose} aria-label="Закрыть">
+            <button type="button" onClick={swipe.close} aria-label="Закрыть">
               <X size={20} />
             </button>
           </div>

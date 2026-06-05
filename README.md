@@ -44,6 +44,7 @@ src/
 
 public/
   manifest.json
+  admin-manifest.json
   service-worker.js
   icons/
   assets/
@@ -53,6 +54,7 @@ netlify/
   functions/
     send-order.js
     admin-orders.js
+    blob-test.js
     push-config.js
     lib/
       orders-store.js
@@ -116,6 +118,8 @@ ADMIN_PASSWORD
 VAPID_PUBLIC_KEY
 VAPID_PRIVATE_KEY
 VAPID_SUBJECT
+NETLIFY_BLOBS_SITE_ID
+NETLIFY_BLOBS_TOKEN
 ```
 
 Токен не используется во фронтенде. Он читается только в `netlify/functions/send-order.js` через `process.env.TELEGRAM_BOT_TOKEN`.
@@ -123,6 +127,8 @@ VAPID_SUBJECT
 `ADMIN_PASSWORD` нужен для тестовой панели `/admin`. Пароль не вшивается во фронтенд: админ вводит его в форме, а Netlify Function проверяет значение на сервере.
 
 `VAPID_PUBLIC_KEY` и `VAPID_PRIVATE_KEY` нужны для настоящих Web Push-уведомлений о смене статуса заказа. `VAPID_SUBJECT` можно указать как контакт, например `mailto:owner@example.com`.
+
+`NETLIFY_BLOBS_SITE_ID` и `NETLIFY_BLOBS_TOKEN` нужны только как запасной ручной режим для Netlify Blobs. В обычном Netlify Functions-окружении Blobs инициализируются через `connectLambda(event)`. Если `/.netlify/functions/blob-test` возвращает `MissingBlobsEnvironmentError`, добавьте эти две переменные: `NETLIFY_BLOBS_SITE_ID` равен Project ID сайта, а `NETLIFY_BLOBS_TOKEN` равен Netlify Personal Access Token с доступом к сайту.
 
 ## Telegram-бот
 
@@ -154,6 +160,31 @@ https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates
 Если env-переменные не заданы, функция вернёт понятную ошибку: `В Netlify не настроены TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID`.
 
 После успешной отправки в Telegram заказ сохраняется в Netlify Blobs и появляется в админке.
+
+## Как проверить Netlify Blobs
+
+После деплоя откройте:
+
+```text
+https://ваш-сайт.netlify.app/.netlify/functions/blob-test
+```
+
+Ожидаемый ответ:
+
+```json
+{
+  "ok": true,
+  "store": "vv-orders"
+}
+```
+
+Для тестовой записи отправьте `POST` на тот же адрес. Например из терминала:
+
+```bash
+curl -X POST https://ваш-сайт.netlify.app/.netlify/functions/blob-test
+```
+
+После этого в Netlify → Blobs должен появиться store `vv-orders` и ключи `orders-index`, `order:...`. Debug-функцию `blob-test.js` можно удалить после презентационной проверки.
 
 ## Как проверить админку
 
@@ -194,6 +225,8 @@ npx web-push generate-vapid-keys
 Затем добавьте значения в Netlify как `VAPID_PUBLIC_KEY` и `VAPID_PRIVATE_KEY`.
 
 Локально `/admin` открывается в демо-режиме, если проект запущен через обычный `npm run dev` или `npm run preview`. Для проверки реальных Netlify Functions локально используйте `netlify dev`.
+
+Для отдельной иконки админки на iPhone откройте именно `/admin`, дождитесь загрузки экрана входа и добавьте страницу на экран «Домой». В проекте есть отдельный `admin.html` и `admin-manifest.json`, поэтому Netlify отдаёт для `/admin` админский manifest сразу до запуска React. Если раньше уже добавляли иконку, удалите её и добавьте заново: iOS может держать старый `start_url` из основного manifest. Safari может визуально показывать только домен без `/admin`, это нормально; проверять нужно по тому, какой экран открывается при запуске иконки.
 
 ## Как проверить PWA
 
