@@ -1,8 +1,10 @@
-const CACHE_VERSION = "vv-delivery-mvp-v1.1.0";
+const CACHE_VERSION = "vv-delivery-mvp-v1.1.2";
 const APP_SHELL = [
   "/",
   "/index.html",
+  "/admin.html",
   "/manifest.json",
+  "/admin-manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon.svg",
@@ -45,14 +47,15 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
+    const fallbackUrl = url.pathname.startsWith("/admin") ? "/admin.html" : "/index.html";
     event.respondWith(
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put("/index.html", copy));
+          caches.open(CACHE_VERSION).then((cache) => cache.put(fallbackUrl, copy));
           return response;
         })
-        .catch(() => caches.match("/index.html"))
+        .catch(() => caches.match(fallbackUrl))
     );
     return;
   }
@@ -76,11 +79,19 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || "/";
+  const targetUrl = new URL(event.notification.data?.url || "/", self.location.origin).href;
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      const openClient = clientList.find((client) => "focus" in client);
-      if (openClient) return openClient.focus();
+      const targetPath = new URL(targetUrl).pathname;
+      const matchingClient = clientList.find((client) => {
+        try {
+          return new URL(client.url).pathname.startsWith(targetPath);
+        } catch {
+          return false;
+        }
+      });
+
+      if (matchingClient) return matchingClient.focus();
       return clients.openWindow(targetUrl);
     })
   );
@@ -105,7 +116,7 @@ self.addEventListener("push", (event) => {
       body,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
-      tag: data.orderId ? `vv-order-${data.orderId}` : "vv-order-status",
+      tag: data.notificationTag || (data.orderId ? `vv-order-${data.orderId}` : "vv-order-status"),
       renotify: true,
       data: {
         url: data.url || "/",

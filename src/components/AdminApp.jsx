@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Bike,
+  BellRing,
   CheckCircle2,
   ChefHat,
   Clock,
   KeyRound,
-  LogOut,
   PackageCheck,
   RefreshCw,
   Send,
@@ -14,6 +14,7 @@ import {
   UserRound
 } from "lucide-react";
 import { formatPrice } from "../utils/price";
+import { subscribeForAdminPush } from "../utils/notifications";
 
 const PASSWORD_KEY = "vv_admin_password";
 
@@ -133,14 +134,16 @@ function itemLine(item) {
 
 export default function AdminApp() {
   const demoRequested = new URLSearchParams(window.location.search).get("demo") === "1" && isLocalhost();
-  const savedPassword = demoRequested ? "" : sessionStorage.getItem(PASSWORD_KEY) || "";
-  const [password, setPassword] = useState(() => (demoRequested ? "__local_demo__" : ""));
+  const savedPassword = demoRequested ? "" : localStorage.getItem(PASSWORD_KEY) || "";
+  const [password, setPassword] = useState(() => (demoRequested ? "__local_demo__" : savedPassword));
   const [draftPassword, setDraftPassword] = useState(savedPassword);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [demoMode, setDemoMode] = useState(false);
   const [checkingSession, setCheckingSession] = useState(Boolean(savedPassword));
+  const [pushStatus, setPushStatus] = useState("");
+  const [pushLoading, setPushLoading] = useState(false);
 
   const stats = useMemo(() => getOrderTotalByStatus(orders), [orders]);
   const revenue = useMemo(
@@ -157,9 +160,9 @@ export default function AdminApp() {
       return;
     }
 
-    const storedPassword = sessionStorage.getItem(PASSWORD_KEY) || "";
+    const storedPassword = localStorage.getItem(PASSWORD_KEY) || "";
     if (storedPassword) {
-      verifyLogin(storedPassword, { persist: false });
+      loadOrders(storedPassword).finally(() => setCheckingSession(false));
     } else {
       setCheckingSession(false);
     }
@@ -196,11 +199,11 @@ export default function AdminApp() {
       setOrders(nextOrders);
       setPassword(nextPassword);
       if (shouldPersist) {
-        sessionStorage.setItem(PASSWORD_KEY, nextPassword);
+        localStorage.setItem(PASSWORD_KEY, nextPassword);
       }
       return true;
     } catch (loginError) {
-      sessionStorage.removeItem(PASSWORD_KEY);
+      localStorage.removeItem(PASSWORD_KEY);
       setPassword("");
       setOrders([]);
       setError(adminErrorMessage(loginError));
@@ -223,7 +226,7 @@ export default function AdminApp() {
       setOrders(nextOrders);
     } catch (fetchError) {
       if (fetchError.status === 401) {
-        sessionStorage.removeItem(PASSWORD_KEY);
+        localStorage.removeItem(PASSWORD_KEY);
         setPassword("");
         setOrders([]);
         setDraftPassword(nextPassword);
@@ -293,13 +296,49 @@ export default function AdminApp() {
     await verifyLogin(next);
   }
 
-  function logout() {
-    sessionStorage.removeItem(PASSWORD_KEY);
-    setPassword("");
-    setDraftPassword("");
-    setOrders([]);
-    setError("");
-    setDemoMode(false);
+  async function setupAdminPush() {
+    if (!password || pushLoading) return;
+
+    setPushLoading(true);
+    setPushStatus("Запрашиваем разрешение на уведомления...");
+
+    try {
+      const push = await subscribeForAdminPush();
+      if (!push.ok) {
+        setPushStatus(push.message);
+        return;
+      }
+
+      setPushStatus("Сохраняем push-подписку администратора...");
+
+      const response = await fetch("/.netlify/functions/admin-push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password
+        },
+        body: JSON.stringify({
+          action: "test",
+          label: "Админка",
+          subscription: push.subscription
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || "Не удалось сохранить push-подписку");
+      }
+
+      setPushStatus(
+        data.push?.ok
+          ? "Push администратора включён. Тестовое уведомление отправлено."
+          : `Подписка сохранена, но тест не отправился: ${data.push?.reason || "проверьте VAPID-ключи"}`
+      );
+    } catch (pushError) {
+      setPushStatus(pushError.message || "Не удалось включить push администратора");
+    } finally {
+      setPushLoading(false);
+    }
   }
 
   if (!password) {
@@ -356,11 +395,17 @@ export default function AdminApp() {
           </div>
         </div>
         <div className="admin-toolbar">
+          <button
+            type="button"
+            onClick={setupAdminPush}
+            disabled={pushLoading}
+            aria-label="Включить push администратора"
+            title="Включить push администратора"
+          >
+            <BellRing size={18} />
+          </button>
           <button type="button" onClick={() => loadOrders()} disabled={loading} aria-label="Обновить">
             <RefreshCw size={18} />
-          </button>
-          <button type="button" onClick={logout} aria-label="Выйти">
-            <LogOut size={18} />
           </button>
         </div>
       </header>
@@ -371,6 +416,9 @@ export default function AdminApp() {
         </div>
       ) : null}
       {error ? <div className="admin-alert">{error}</div> : null}
+      {pushStatus ? (
+        <div className={`admin-push-status ${pushStatus.includes("включён") ? "ok" : ""}`}>{pushStatus}</div>
+      ) : null}
 
       <section className="admin-hero">
         <div>

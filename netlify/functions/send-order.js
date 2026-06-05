@@ -1,4 +1,5 @@
 import { initOrdersStore, saveOrder } from "./lib/orders-store.js";
+import { sendAdminNewOrderPush } from "./lib/push.js";
 
 const json = (statusCode, payload) => ({
   statusCode,
@@ -193,6 +194,7 @@ export const handler = async (event) => {
 
     let savedOrder = null;
     let storageError = null;
+    let adminPush = null;
     try {
       initOrdersStore(event);
       savedOrder = await saveOrder({
@@ -204,11 +206,25 @@ export const handler = async (event) => {
       console.error("Order was sent to Telegram but was not saved to admin storage", error);
     }
 
+    if (savedOrder) {
+      try {
+        adminPush = await sendAdminNewOrderPush(savedOrder);
+      } catch (error) {
+        adminPush = {
+          ok: false,
+          reason: "admin-push-failed",
+          message: error.message || String(error)
+        };
+        console.error("Order was saved but admin push was not sent", error);
+      }
+    }
+
     return json(200, {
       ok: true,
       orderId: savedOrder?.id || null,
       storage: savedOrder ? "saved" : "failed",
-      storageError: storageError ? storageError.message : null
+      storageError: storageError ? storageError.message : null,
+      adminPush
     });
   } catch {
     return json(502, {

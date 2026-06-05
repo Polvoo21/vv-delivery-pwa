@@ -73,7 +73,7 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-export async function subscribeForOrderPush() {
+async function subscribeForPush(successMessage, failureMessage) {
   if (!("PushManager" in window)) {
     return {
       ok: false,
@@ -108,13 +108,27 @@ export async function subscribeForOrderPush() {
 
     return {
       ok: true,
-      message: "Уведомления о статусе заказа включены.",
+      message: successMessage,
       subscription: subscription.toJSON()
     };
   } catch {
     return {
       ok: false,
-      message: "Не удалось включить push-уведомления о статусе заказа."
+      message: failureMessage
     };
   }
+}
+
+export function subscribeForOrderPush() {
+  return subscribeForPush(
+    "Уведомления о статусе заказа включены.",
+    "Не удалось включить push-уведомления о статусе заказа."
+  );
+}
+
+export function subscribeForAdminPush() {
+  return subscribeForPush(
+    "Уведомления администратора включены.",
+    "Не удалось включить push-уведомления администратора."
+  );
 }

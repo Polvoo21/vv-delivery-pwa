@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import { ORDER_STATUSES } from "./orders-store.js";
+import { listAdminPushSubscriptions, ORDER_STATUSES } from "./orders-store.js";
 
 function getVapidConfig() {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
@@ -21,9 +21,8 @@ export function getPublicVapidKey() {
   return process.env.VAPID_PUBLIC_KEY || "";
 }
 
-export async function sendStatusPush(order) {
+async function sendPush(subscription, payload, tag) {
   const config = getVapidConfig();
-  const subscription = order?.pushSubscription;
 
   if (!config) {
     return {
@@ -41,20 +40,11 @@ export async function sendStatusPush(order) {
 
   webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
 
-  const statusLabel = ORDER_STATUSES[order.status] || "обновлён";
-  const payload = JSON.stringify({
-    title: "Вместе Вкуснее",
-    body: `Статус заказа #${order.id}: ${statusLabel}`,
-    url: "/",
-    orderId: order.id,
-    status: order.status,
-    statusLabel
-  });
-
   try {
-    await webpush.sendNotification(subscription, payload, {
+    await webpush.sendNotification(subscription, JSON.stringify(payload), {
       TTL: 60 * 60,
-      urgency: "high"
+      urgency: "high",
+      topic: tag
     });
 
     return {
@@ -68,4 +58,71 @@ export async function sendStatusPush(order) {
       message: error.message
     };
   }
+}
+
+export async function sendStatusPush(order) {
+  const statusLabel = ORDER_STATUSES[order.status] || "обновлён";
+
+  return sendPush(
+    order?.pushSubscription,
+    {
+      title: "Вместе Вкуснее",
+      body: `Статус заказа #${order.id}: ${statusLabel}`,
+      url: "/",
+      orderId: order.id,
+      status: order.status,
+      statusLabel,
+      notificationTag: order.id ? `vv-order-${order.id}` : "vv-order-status"
+    },
+    order.id ? `order-${order.id}` : "order-status"
+  );
+}
+
+export async function sendAdminTestPush(subscription) {
+  return sendPush(
+    subscription,
+    {
+      title: "Админка «Вместе Вкуснее»",
+      body: "Push-уведомления администратора работают",
+      url: "/admin",
+      notificationTag: "vv-admin-test"
+    },
+    "admin-test"
+  );
+}
+
+export async function sendAdminNewOrderPush(order) {
+  const records = await listAdminPushSubscriptions();
+  if (!records.length) {
+    return {
+      ok: false,
+      reason: "admin-subscriptions-missing",
+      sent: 0
+    };
+  }
+
+  const mode = order.mode === "pickup" ? "самовывоз" : "доставка";
+  const total = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(Number(order.total || 0));
+  const results = await Promise.all(
+    records.map((record) =>
+      sendPush(
+        record.subscription,
+        {
+          title: "Новый заказ «Вместе Вкуснее»",
+          body: `${order.customerName || "Гость"} · ${mode} · ${total} ₽`,
+          url: "/admin",
+          orderId: order.id,
+          notificationTag: order.id ? `vv-admin-order-${order.id}` : "vv-admin-order"
+        },
+        order.id ? `admin-order-${order.id}` : "admin-order"
+      )
+    )
+  );
+
+  return {
+    ok: results.some((result) => result.ok),
+    sent: results.filter((result) => result.ok).length,
+    total: results.length,
+    results
+  };
 }

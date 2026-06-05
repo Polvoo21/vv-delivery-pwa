@@ -1,4 +1,5 @@
 import { connectLambda, getStore } from "@netlify/blobs";
+import { createHash } from "node:crypto";
 
 export const ORDER_STATUSES = {
   accepted: "Принят",
@@ -8,7 +9,9 @@ export const ORDER_STATUSES = {
 };
 
 const INDEX_KEY = "orders-index";
+const ADMIN_PUSH_INDEX_KEY = "admin-push-index";
 const MAX_ORDERS = 200;
+const MAX_ADMIN_SUBSCRIPTIONS = 20;
 const STORE_NAME = "vv-orders";
 
 export function initOrdersStore(event) {
@@ -42,6 +45,10 @@ function getOrdersStore() {
 function makeOrderId() {
   const random = Math.random().toString(36).slice(2, 7).toUpperCase();
   return `${Date.now().toString(36).toUpperCase()}-${random}`;
+}
+
+function makeSubscriptionId(endpoint) {
+  return createHash("sha256").update(endpoint).digest("hex").slice(0, 32);
 }
 
 function publicOrder(order) {
@@ -119,6 +126,47 @@ export async function saveOrder(rawOrder) {
   await store.setJSON(INDEX_KEY, nextIndex);
 
   return publicOrder(order);
+}
+
+export async function saveAdminPushSubscription(subscription, label = "Админка") {
+  if (!subscription?.endpoint) {
+    const error = new Error("Push subscription не содержит endpoint");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const store = getOrdersStore();
+  const now = new Date().toISOString();
+  const id = makeSubscriptionId(subscription.endpoint);
+  const record = {
+    id,
+    label,
+    subscription,
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await store.setJSON(`admin-push:${id}`, record);
+
+  const currentIndex = (await store.get(ADMIN_PUSH_INDEX_KEY, { type: "json" }).catch(() => [])) || [];
+  const nextIndex = [id, ...currentIndex.filter((item) => item !== id)].slice(0, MAX_ADMIN_SUBSCRIPTIONS);
+  await store.setJSON(ADMIN_PUSH_INDEX_KEY, nextIndex);
+
+  return {
+    id,
+    label,
+    createdAt: now
+  };
+}
+
+export async function listAdminPushSubscriptions() {
+  const store = getOrdersStore();
+  const index = (await store.get(ADMIN_PUSH_INDEX_KEY, { type: "json" }).catch(() => [])) || [];
+  const records = await Promise.all(
+    index.map((id) => store.get(`admin-push:${id}`, { type: "json" }).catch(() => null))
+  );
+
+  return records.filter((record) => record?.subscription?.endpoint);
 }
 
 export async function listOrders() {

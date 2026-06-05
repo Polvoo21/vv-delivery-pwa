@@ -1878,7 +1878,8 @@ img {
 }
 
 .admin-demo-banner,
-.admin-alert {
+.admin-alert,
+.admin-push-status {
   margin-bottom: 14px;
   padding: 13px 15px;
   color: #fff;
@@ -1891,6 +1892,15 @@ img {
 
 .admin-alert {
   background: rgba(201, 110, 94, 0.42);
+}
+
+.admin-push-status {
+  border-radius: 22px;
+  background: rgba(255, 122, 26, 0.34);
+}
+
+.admin-push-status.ok {
+  background: rgba(71, 99, 63, 0.58);
 }
 
 .admin-hero {
