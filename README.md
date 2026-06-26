@@ -1,6 +1,11 @@
 # Вместе Вкуснее | PWA-доставка
 
-MVP PWA-приложения доставки и самовывоза для семейной пиццерии «Вместе Вкуснее». Проект подготовлен под GitHub → Netlify auto deploy: фронтенд собирается через Vite, заказы уходят через Netlify Function в Telegram-группу.
+MVP PWA-приложения доставки и самовывоза для семейной пиццерии «Вместе Вкуснее». Проект можно запускать в двух режимах:
+
+- рекомендуемый VPS-режим: React/Vite фронтенд + Node API + PostgreSQL + общий Caddy HTTPS-прокси;
+- резервный Netlify-режим: Vite build + Netlify Functions + Telegram + Netlify Blobs.
+
+Tilda в этой схеме не нужна: сайт, API, админка, база заказов и push-логика живут на своём сервере.
 
 ## Технологии
 
@@ -8,8 +13,11 @@ MVP PWA-приложения доставки и самовывоза для с�
 - Leaflet + OpenStreetMap/CARTO Voyager для карты без API-ключа
 - LocalStorage для адреса, корзины, промокода, профиля и истории заказов
 - Service Worker + Web App Manifest для PWA
-- Netlify Functions для безопасной отправки заказов в Telegram
-- Netlify Blobs для тестового хранения заказов и админки
+- Node.js + Express API для VPS
+- PostgreSQL для заказов и push-подписок администратора
+- Docker Compose для приложения и PostgreSQL
+- Caddy route для общего reverse proxy на VPS
+- Netlify Functions и Netlify Blobs оставлены как резервный способ деплоя
 
 ## Структура проекта
 
@@ -59,6 +67,18 @@ netlify/
     lib/
       orders-store.js
       push.js
+
+server/
+  index.js
+  db.js
+  orders.js
+  order-utils.js
+  push.js
+
+Dockerfile
+docker-compose.yml
+Caddyfile
+.env.vps.example
 ```
 
 ## Локальный запуск
@@ -74,6 +94,93 @@ npm run dev
 npm run build
 npm run preview
 ```
+
+Запуск Node API локально требует PostgreSQL и `.env` с `DATABASE_URL`, поэтому для обычной проверки интерфейса достаточно `npm run dev`.
+
+Для VPS-сборки фронтенд должен ходить в `/api/...`. В PowerShell:
+
+```powershell
+$env:VITE_API_MODE="vps"
+npm run build
+```
+
+В Docker это уже настроено через `ARG VITE_API_MODE=vps`.
+
+## Деплой на VPS
+
+На текущем VPS уже есть общий Caddy-прокси в `/opt/apps/proxy`, который владеет портами `80` и `443`. Поэтому проект не публикует публичные порты и подключает web-контейнер к общей Docker-сети `edge`.
+
+Рекомендуемая схема:
+
+```text
+браузер/PWA
+↓
+Caddy HTTPS из /opt/apps/proxy
+↓
+Node API + статический dist
+↓
+PostgreSQL
+↓
+Telegram Bot API / Web Push
+```
+
+Базовый запуск:
+
+```bash
+git clone https://github.com/Polvoo21/vv-delivery-pwa.git
+cd vv-delivery-pwa
+cp .env.vps.example .env
+nano .env
+docker compose up -d --build
+```
+
+В `.env` заполните:
+
+```text
+APP_DOMAIN=your-domain.ru
+POSTGRES_DB=vv_delivery
+POSTGRES_USER=vv
+POSTGRES_PASSWORD=длинный_пароль_базы
+ADMIN_PASSWORD=пароль_админки
+TELEGRAM_BOT_TOKEN=токен_бота
+TELEGRAM_CHAT_ID=id_группы
+VAPID_PUBLIC_KEY=публичный_vapid_ключ
+VAPID_PRIVATE_KEY=приватный_vapid_ключ
+VAPID_SUBJECT=mailto:owner@example.com
+```
+
+Перед публичным запуском направьте DNS A-запись домена на IP VPS `216.57.105.205`, затем добавьте блок из `Caddyfile` в `/opt/apps/proxy/Caddyfile` и перезагрузите Caddy:
+
+```bash
+docker compose -f /opt/apps/proxy/docker-compose.yml exec caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+IP-адрес без HTTPS-домена годится только для черновой проверки. Установка PWA и Web Push на iPhone требуют HTTPS-домен.
+
+Проверка после запуска:
+
+```bash
+docker compose ps
+curl https://your-domain.ru/api/health
+```
+
+Ожидаемый ответ:
+
+```json
+{
+  "ok": true,
+  "service": "vv-delivery-api",
+  "storage": "postgres"
+}
+```
+
+Админка:
+
+```text
+https://your-domain.ru/admin
+```
+
+Заказы на VPS хранятся в PostgreSQL. Старые заказы из Netlify Blobs автоматически не мигрируются; при необходимости нужен отдельный скрипт переноса.
 
 Для локальной проверки Netlify Function удобнее использовать Netlify CLI:
 
@@ -109,7 +216,22 @@ Functions directory: netlify/functions
 
 ## Environment Variables
 
-В Netlify добавьте:
+Для VPS основные переменные лежат в `.env`:
+
+```text
+APP_DOMAIN
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+ADMIN_PASSWORD
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID
+VAPID_PUBLIC_KEY
+VAPID_PRIVATE_KEY
+VAPID_SUBJECT
+```
+
+Для резервного Netlify-деплоя добавьте:
 
 ```text
 TELEGRAM_BOT_TOKEN
@@ -122,9 +244,9 @@ NETLIFY_BLOBS_SITE_ID
 NETLIFY_BLOBS_TOKEN
 ```
 
-Токен не используется во фронтенде. Он читается только в `netlify/functions/send-order.js` через `process.env.TELEGRAM_BOT_TOKEN`.
+Токен Telegram не используется во фронтенде. В VPS-режиме он читается только в `server/index.js`, в Netlify-режиме только в `netlify/functions/send-order.js`.
 
-`ADMIN_PASSWORD` нужен для тестовой панели `/admin`. Пароль не вшивается во фронтенд: админ вводит его в форме, а Netlify Function проверяет значение на сервере.
+`ADMIN_PASSWORD` нужен для панели `/admin`. Пароль не вшивается во фронтенд: админ вводит его в форме, а сервер проверяет значение в API.
 
 `VAPID_PUBLIC_KEY` и `VAPID_PRIVATE_KEY` нужны для настоящих Web Push-уведомлений о смене статуса заказа. `VAPID_SUBJECT` можно указать как контакт, например `mailto:owner@example.com`.
 
@@ -157,9 +279,9 @@ https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates
 6. Введите имя и телефон.
 7. Нажмите «Отправить заказ».
 
-Если env-переменные не заданы, функция вернёт понятную ошибку: `В Netlify не настроены TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID`.
+Если env-переменные не заданы, API вернёт понятную ошибку про `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`.
 
-После успешной отправки в Telegram заказ сохраняется в Netlify Blobs и появляется в админке.
+После успешной отправки в Telegram заказ сохраняется в PostgreSQL на VPS или в Netlify Blobs в резервном Netlify-режиме и появляется в админке.
 
 ## Как проверить Netlify Blobs
 
@@ -188,7 +310,7 @@ curl -X POST https://ваш-сайт.netlify.app/.netlify/functions/blob-test
 
 ## Как проверить админку
 
-1. В Netlify добавьте env-переменную:
+1. На VPS добавьте в `.env`, либо в Netlify добавьте env-переменную:
 
 ```text
 ADMIN_PASSWORD=любой_тестовый_пароль
@@ -224,7 +346,7 @@ npx web-push generate-vapid-keys
 
 Затем добавьте значения в Netlify как `VAPID_PUBLIC_KEY` и `VAPID_PRIVATE_KEY`.
 
-Локально `/admin` открывается в демо-режиме, если проект запущен через обычный `npm run dev` или `npm run preview`. Для проверки реальных Netlify Functions локально используйте `netlify dev`.
+Локально `/admin` открывается в демо-режиме, если проект запущен через обычный `npm run dev` или `npm run preview`. Для проверки реального VPS API используйте Docker Compose или локальный PostgreSQL + `npm run server`; для проверки Netlify Functions локально используйте `netlify dev`.
 
 Для отдельной иконки админки на iPhone откройте именно `/admin`, дождитесь загрузки экрана входа и добавьте страницу на экран «Домой». В проекте есть отдельный `admin.html` и `admin-manifest.json`, поэтому Netlify отдаёт для `/admin` админский manifest сразу до запуска React. Если раньше уже добавляли иконку, удалите её и добавьте заново: iOS может держать старый `start_url` из основного manifest. Safari может визуально показывать только домен без `/admin`, это нормально; проверять нужно по тому, какой экран открывается при запуске иконки.
 
@@ -262,14 +384,14 @@ Service Worker версионирован, чистит старые кэши п
 - Карточка товара с размерами, тестом, добавками и удалением ингредиентов
 - Корзина с количеством, удалением, upsell-блоком и итогами
 - Промокод `VV25`
-- Оформление заказа и отправка в Telegram через Netlify Function
+- Оформление заказа и отправка в Telegram через VPS API или Netlify Function
 - Тестовая админка `/admin` с паролем, списком заказов и сменой статусов
 - Личный кабинет с адресом, локальной историей заказов, тестом уведомлений и очисткой данных
 - PWA manifest и service worker
 
 ## Известные ограничения
 
-- Это MVP без полноценной SQL-базы: клиентская история хранится на устройстве, а админка хранит заказы в Netlify Blobs.
+- Клиентская история заказов хранится на устройстве. Серверная история на VPS хранится в PostgreSQL.
 - Админка защищена простым паролем для презентации, без ролей, пользователей и аудита.
 - Нет боевых удалённых push-уведомлений для всех клиентов.
 - Нет rate limit, капчи и антиспам-защиты.

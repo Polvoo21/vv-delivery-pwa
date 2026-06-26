@@ -5,6 +5,7 @@ import { calculateCartTotals, formatPrice } from "../utils/price";
 import { hasErrors, normalizePhone, validateCheckout } from "../utils/validators";
 import { useSwipeDismiss } from "../utils/useSwipeDismiss";
 import { subscribeForOrderPush } from "../utils/notifications";
+import { apiPath } from "../utils/api";
 
 const PAYMENT_OPTIONS = [
   { id: "cash", label: "наличными", icon: Banknote },
@@ -171,7 +172,7 @@ export default function CheckoutSheet({
 
       setStatus(push.ok ? "Отправляем заказ и подключаем push..." : "Отправляем заказ...");
 
-      const response = await fetch("/.netlify/functions/send-order", {
+      const response = await fetch(apiPath("sendOrder"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

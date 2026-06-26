@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatPrice } from "../utils/price";
 import { subscribeForAdminPush } from "../utils/notifications";
+import { apiPath } from "../utils/api";
 
 const PASSWORD_KEY = "vv_admin_password";
 
@@ -176,7 +177,7 @@ export default function AdminApp() {
   }, [demoRequested]);
 
   async function fetchOrders(nextPassword) {
-    const response = await fetch("/.netlify/functions/admin-orders", {
+    const response = await fetch(apiPath("adminOrders"), {
       headers: {
         "x-admin-password": nextPassword
       }
@@ -241,7 +242,7 @@ export default function AdminApp() {
       } else if (isLocalhost()) {
         setDemoMode(true);
         setOrders(DEMO_ORDERS);
-        setError("Локальный демо-режим: Netlify Functions доступны после деплоя или через netlify dev.");
+        setError("Локальный демо-режим: API доступен после запуска сервера или через netlify dev.");
       } else {
         setError(adminErrorMessage(fetchError));
       }
@@ -268,7 +269,7 @@ export default function AdminApp() {
     );
 
     try {
-      const response = await fetch("/.netlify/functions/admin-orders", {
+      const response = await fetch(apiPath("adminOrders"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -322,7 +323,7 @@ export default function AdminApp() {
     );
 
     try {
-      const response = await fetch("/.netlify/functions/admin-orders", {
+      const response = await fetch(apiPath("adminOrders"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -361,7 +362,7 @@ export default function AdminApp() {
 
       setPushStatus("Сохраняем push-подписку администратора...");
 
-      const response = await fetch("/.netlify/functions/admin-push", {
+      const response = await fetch(apiPath("adminPush"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -409,7 +410,7 @@ export default function AdminApp() {
             <p className="eyebrow">Админка MVP</p>
             <h1>Войти в заказы</h1>
             <p>
-              Тестовый вход по паролю. Пароль хранится только в Netlify Environment Variables как
+              Тестовый вход по паролю. Пароль хранится только в переменных окружения сервера как
               <b> ADMIN_PASSWORD</b>.
             </p>
             <form onSubmit={login}>
@@ -462,7 +463,7 @@ export default function AdminApp() {
 
       {demoMode ? (
         <div className="admin-demo-banner">
-          Локальный демо-режим. На Netlify здесь будут реальные заказы из Blobs.
+          Локальный демо-режим. На сервере здесь будут реальные заказы из базы.
         </div>
       ) : null}
       {error ? <div className="admin-alert">{error}</div> : null}

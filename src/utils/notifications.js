@@ -1,3 +1,5 @@
+import { apiPath } from "./api";
+
 export async function requestNotificationPermission() {
   if (!("Notification" in window)) {
     return {
@@ -87,13 +89,13 @@ async function subscribeForPush(successMessage, failureMessage) {
   }
 
   try {
-    const configResponse = await fetch("/.netlify/functions/push-config");
+    const configResponse = await fetch(apiPath("pushConfig"));
     const config = await configResponse.json().catch(() => ({}));
 
     if (!configResponse.ok || !config.ok || !config.publicKey) {
       return {
         ok: false,
-        message: config.error || "Push-ключи не настроены на Netlify."
+        message: config.error || "Push-ключи не настроены на сервере."
       };
     }
 
