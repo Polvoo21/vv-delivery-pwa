@@ -8,11 +8,13 @@ import {
   Clock,
   KeyRound,
   PackageCheck,
+  Plus,
   RefreshCw,
   Send,
   ShieldCheck,
   Truck,
-  UserRound
+  UserRound,
+  UsersRound
 } from "lucide-react";
 import { formatPrice } from "../utils/price";
 import { subscribeForAdminPush } from "../utils/notifications";
@@ -150,6 +152,17 @@ export default function AdminApp() {
   const [checkingSession, setCheckingSession] = useState(Boolean(savedPassword));
   const [pushStatus, setPushStatus] = useState("");
   const [pushLoading, setPushLoading] = useState(false);
+  const [partners, setPartners] = useState([]);
+  const [partnerForm, setPartnerForm] = useState({
+    name: "",
+    login: "",
+    password: "",
+    promoCode: "",
+    discountPercent: 10,
+    commissionPercent: 7
+  });
+  const [partnerStatus, setPartnerStatus] = useState("");
+  const [partnerLoading, setPartnerLoading] = useState(false);
 
   const activeOrders = useMemo(() => orders.filter(isActiveOrder), [orders]);
   const archivedCount = orders.length - activeOrders.length;
@@ -195,6 +208,24 @@ export default function AdminApp() {
     return data.orders || [];
   }
 
+  async function fetchPartners(nextPassword) {
+    const response = await fetch(apiPath("adminPartners"), {
+      headers: {
+        "x-admin-password": nextPassword
+      }
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      const nextError = new Error(data.error || "Не удалось загрузить партнёров");
+      nextError.status = response.status;
+      nextError.details = data.details;
+      throw nextError;
+    }
+
+    return data.partners || [];
+  }
+
   async function verifyLogin(nextPassword, options = {}) {
     const shouldPersist = options.persist !== false;
 
@@ -203,8 +234,10 @@ export default function AdminApp() {
 
     try {
       const nextOrders = await fetchOrders(nextPassword);
+      const nextPartners = await fetchPartners(nextPassword);
       setDemoMode(false);
       setOrders(nextOrders);
+      setPartners(nextPartners);
       setPassword(nextPassword);
       if (shouldPersist) {
         localStorage.setItem(PASSWORD_KEY, nextPassword);
@@ -214,6 +247,7 @@ export default function AdminApp() {
       localStorage.removeItem(PASSWORD_KEY);
       setPassword("");
       setOrders([]);
+      setPartners([]);
       setError(adminErrorMessage(loginError));
       return false;
     } finally {
@@ -230,18 +264,22 @@ export default function AdminApp() {
 
     try {
       const nextOrders = await fetchOrders(nextPassword);
+      const nextPartners = await fetchPartners(nextPassword);
       setDemoMode(false);
       setOrders(nextOrders);
+      setPartners(nextPartners);
     } catch (fetchError) {
       if (fetchError.status === 401) {
         localStorage.removeItem(PASSWORD_KEY);
         setPassword("");
         setOrders([]);
+        setPartners([]);
         setDraftPassword(nextPassword);
         setError(adminErrorMessage(fetchError));
       } else if (isLocalhost()) {
         setDemoMode(true);
         setOrders(DEMO_ORDERS);
+        setPartners([]);
         setError("Локальный демо-режим: API доступен после запуска сервера или через netlify dev.");
       } else {
         setError(adminErrorMessage(fetchError));
@@ -302,6 +340,53 @@ export default function AdminApp() {
     }
 
     await verifyLogin(next);
+  }
+
+  function updatePartnerForm(key, value) {
+    setPartnerForm((current) => ({
+      ...current,
+      [key]: key === "discountPercent" || key === "commissionPercent" ? Number(value) : value
+    }));
+    setPartnerStatus("");
+  }
+
+  async function createPartnerAccount(event) {
+    event.preventDefault();
+    if (!password || partnerLoading) return;
+
+    setPartnerLoading(true);
+    setPartnerStatus("Создаём доступ блогеру...");
+
+    try {
+      const response = await fetch(apiPath("adminPartners"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password
+        },
+        body: JSON.stringify(partnerForm)
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || "Не удалось создать партнёра");
+      }
+
+      setPartners((current) => [data.partner, ...current]);
+      setPartnerForm({
+        name: "",
+        login: "",
+        password: "",
+        promoCode: "",
+        discountPercent: 10,
+        commissionPercent: 7
+      });
+      setPartnerStatus("Партнёр создан. Передайте блогеру логин, пароль и адрес partners.vmestevkusnee.ru.");
+    } catch (partnerError) {
+      setPartnerStatus(partnerError.message || "Не удалось создать партнёра");
+    } finally {
+      setPartnerLoading(false);
+    }
   }
 
   async function closeOrderCard(orderId) {
@@ -495,6 +580,107 @@ export default function AdminApp() {
             </article>
           );
         })}
+      </section>
+
+      <section className="admin-partners">
+        <div className="admin-section-title">
+          <h2>Блогеры</h2>
+          <span>Промокоды и начисления</span>
+        </div>
+
+        <form className="admin-partner-form" onSubmit={createPartnerAccount}>
+          <label className="field">
+            <span>Имя блогера</span>
+            <input
+              value={partnerForm.name}
+              onChange={(event) => updatePartnerForm("name", event.target.value)}
+              placeholder="Например: Анна Иванова"
+            />
+          </label>
+          <label className="field">
+            <span>Логин</span>
+            <input
+              value={partnerForm.login}
+              onChange={(event) => updatePartnerForm("login", event.target.value)}
+              placeholder="anna"
+              autoComplete="off"
+            />
+          </label>
+          <label className="field">
+            <span>Пароль</span>
+            <input
+              value={partnerForm.password}
+              onChange={(event) => updatePartnerForm("password", event.target.value)}
+              placeholder="Минимум 6 символов"
+              autoComplete="new-password"
+            />
+          </label>
+          <label className="field">
+            <span>Промокод</span>
+            <input
+              value={partnerForm.promoCode}
+              onChange={(event) => updatePartnerForm("promoCode", event.target.value.toUpperCase())}
+              placeholder="ANNA10"
+              autoComplete="off"
+            />
+          </label>
+          <label className="field">
+            <span>Скидка клиенту, %</span>
+            <input
+              value={partnerForm.discountPercent}
+              onChange={(event) => updatePartnerForm("discountPercent", event.target.value)}
+              inputMode="numeric"
+            />
+          </label>
+          <label className="field">
+            <span>Комиссия блогеру, %</span>
+            <input
+              value={partnerForm.commissionPercent}
+              onChange={(event) => updatePartnerForm("commissionPercent", event.target.value)}
+              inputMode="numeric"
+            />
+          </label>
+          <button className="admin-form-action" type="submit" disabled={partnerLoading}>
+            <Plus size={17} />
+            {partnerLoading ? "Создаём..." : "Создать"}
+          </button>
+        </form>
+        {partnerStatus ? <div className="admin-push-status">{partnerStatus}</div> : null}
+
+        <div className="admin-partner-list">
+          {partners.length ? (
+            partners.map((partner) => (
+              <article className="admin-partner-card" key={partner.id}>
+                <div>
+                  <b>{partner.name}</b>
+                  <span>{partner.login} · {partner.promoCode}</span>
+                </div>
+                <div>
+                  <small>Скидка</small>
+                  <strong>{partner.discountPercent}%</strong>
+                </div>
+                <div>
+                  <small>Комиссия</small>
+                  <strong>{partner.commissionPercent}%</strong>
+                </div>
+                <div>
+                  <small>Заказы</small>
+                  <strong>{partner.ordersCount}</strong>
+                </div>
+                <div>
+                  <small>Начислено</small>
+                  <strong>{formatPrice(partner.commissionAmount)} ₽</strong>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="admin-empty compact">
+              <UsersRound size={30} />
+              <h3>Блогеров пока нет</h3>
+              <p>Создайте первого партнёра, выдайте ему промокод и доступ в кабинет.</p>
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="admin-orders">

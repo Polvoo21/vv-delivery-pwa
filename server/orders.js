@@ -34,6 +34,8 @@ function publicOrder(row) {
     address: row.address || raw.address,
     total: Number(row.total || raw.total || 0),
     payment: row.payment || raw.payment,
+    promoCode: row.promo_code || raw.promoCode || "",
+    partnerId: row.partner_id || raw.partner?.id || "",
     pushEnabled: Boolean(raw.pushSubscription?.endpoint)
   };
 }
@@ -54,9 +56,9 @@ export async function saveOrder(rawOrder, telegramMessageId = null) {
     `
       insert into orders (
         id, status, raw, customer_name, customer_phone, mode, address, total, payment,
-        telegram_message_id, created_at, updated_at
+        promo_code, partner_id, telegram_message_id, created_at, updated_at
       )
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       on conflict (id) do update set
         status = excluded.status,
         raw = excluded.raw,
@@ -66,6 +68,8 @@ export async function saveOrder(rawOrder, telegramMessageId = null) {
         address = excluded.address,
         total = excluded.total,
         payment = excluded.payment,
+        promo_code = excluded.promo_code,
+        partner_id = excluded.partner_id,
         telegram_message_id = excluded.telegram_message_id,
         updated_at = excluded.updated_at
       returning *
@@ -80,6 +84,8 @@ export async function saveOrder(rawOrder, telegramMessageId = null) {
       order.address || "",
       Number(order.total || 0),
       order.payment || "",
+      order.promoCode || "",
+      order.partner?.id || "",
       telegramMessageId,
       order.createdAt,
       order.updatedAt

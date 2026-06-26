@@ -83,6 +83,12 @@ function formatItem(item, index) {
 export function buildTelegramMessage(order) {
   const itemsText = order.items.map(formatItem).join("\n\n");
   const discountText = order.discount ? "да" : "нет";
+  const partnerText = order.partner?.name
+    ? `${order.partner.name} (${order.partner.promoCode || order.promoCode})`
+    : "-";
+  const commissionText = order.partnerCommission
+    ? `${money(order.partnerCommission.commissionAmount)} ₽ (${order.partnerCommission.commissionPercent}%)`
+    : "-";
   const createdAt = order.createdAt
     ? new Date(order.createdAt).toLocaleString("ru-RU", { timeZone: "Europe/Moscow" })
     : new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
@@ -101,6 +107,8 @@ export function buildTelegramMessage(order) {
 
 Скидка: ${discountText}
 Промокод: ${dash(order.promoCode)}
+Партнёр: ${dash(partnerText)}
+Комиссия партнёру: ${dash(commissionText)}
 Оплата: ${dash(order.payment)}
 Сумма: ${money(order.total)} ₽
 

@@ -174,11 +174,16 @@ curl https://your-domain.ru/api/health
 }
 ```
 
-Админка:
+Публичные домены:
 
 ```text
-https://your-domain.ru/admin
+delivery.vmestevkusnee.ru  -> PWA-доставка
+partners.vmestevkusnee.ru  -> кабинет блогера
+admin.vmestevkusnee.ru     -> админка
+vmestevkusnee.ru           -> будущий основной сайт, не редиректить на доставку
 ```
+
+В общий `/opt/apps/proxy/Caddyfile` добавьте блоки из `Caddyfile` в корне проекта.
 
 Заказы на VPS хранятся в PostgreSQL. Старые заказы из Netlify Blobs автоматически не мигрируются; при необходимости нужен отдельный скрипт переноса.
 

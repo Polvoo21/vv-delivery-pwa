@@ -1,12 +1,22 @@
-# Add this block to /opt/apps/proxy/Caddyfile on the VPS.
-# Replace pizza.example.com with the real domain or subdomain.
+# Add these blocks to /opt/apps/proxy/Caddyfile on the VPS.
+# vmestevkusnee.ru is intentionally not included here: keep it for the main site.
 
-pizza.example.com {
+delivery.vmestevkusnee.ru {
   encode zstd gzip
 
   request_body {
     max_size 2MB
   }
 
+  reverse_proxy vv-delivery-app:3000
+}
+
+partners.vmestevkusnee.ru {
+  encode zstd gzip
+  reverse_proxy vv-delivery-app:3000
+}
+
+admin.vmestevkusnee.ru {
+  encode zstd gzip
   reverse_proxy vv-delivery-app:3000
 }

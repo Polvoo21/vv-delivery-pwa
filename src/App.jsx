@@ -8,6 +8,7 @@ import InfoSheet from "./components/InfoSheet";
 import ProductModal from "./components/ProductModal";
 import ProfileSheet from "./components/ProfileSheet";
 import PromoCodeSheet from "./components/PromoCodeSheet";
+import PartnerApp from "./components/PartnerApp";
 import SplashScreen from "./components/SplashScreen";
 import Toast from "./components/Toast";
 import { OFFER_DISCOUNT } from "./data/config";
@@ -141,7 +142,7 @@ function ClientApp() {
       ...current,
       promo
     }));
-    showToast("Промокод VV25 применён");
+    showToast(`Промокод ${promo.code} применён`);
   }
 
   function openCheckout() {
@@ -296,7 +297,9 @@ function ClientApp() {
 }
 
 export default function App() {
-  const isAdmin = window.location.pathname.startsWith("/admin");
+  const hostname = window.location.hostname;
+  const isAdmin = hostname.startsWith("admin.") || window.location.pathname.startsWith("/admin");
+  const isPartner = hostname.startsWith("partners.") || window.location.pathname.startsWith("/partners");
 
   useEffect(() => {
     const manifest = document.querySelector('link[rel="manifest"]');
@@ -308,13 +311,20 @@ export default function App() {
       manifest?.setAttribute("href", "/admin-manifest.json");
       appleTitle?.setAttribute("content", "ВВ Админ");
       theme?.setAttribute("content", "#11130f");
+    } else if (isPartner) {
+      document.title = "Вместе Вкуснее | Партнёры";
+      manifest?.setAttribute("href", "/partner-manifest.json");
+      appleTitle?.setAttribute("content", "ВВ Партнёры");
+      theme?.setAttribute("content", "#11130f");
     } else {
       document.title = "Вместе Вкуснее | Доставка";
       manifest?.setAttribute("href", "/manifest.json");
       appleTitle?.setAttribute("content", "ВВ Доставка");
       theme?.setAttribute("content", "#47633f");
     }
-  }, [isAdmin]);
+  }, [isAdmin, isPartner]);
 
-  return isAdmin ? <AdminApp /> : <ClientApp />;
+  if (isAdmin) return <AdminApp />;
+  if (isPartner) return <PartnerApp />;
+  return <ClientApp />;
 }

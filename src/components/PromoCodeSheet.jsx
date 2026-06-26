@@ -2,35 +2,56 @@ import { useState } from "react";
 import { Percent, X } from "lucide-react";
 import { PROMO_CODES } from "../data/config";
 import { useSwipeDismiss } from "../utils/useSwipeDismiss";
+import { apiMode, apiPath } from "../utils/api";
 
 export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
   const [value, setValue] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const swipe = useSwipeDismiss(onClose);
 
-  function applyPromo() {
+  async function fetchPartnerPromo(code) {
+    if (apiMode !== "vps") return null;
+
+    const response = await fetch(`${apiPath("promoCodes")}/${encodeURIComponent(code)}`);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      return null;
+    }
+
+    return data.promo || null;
+  }
+
+  async function applyPromo() {
     const normalized = value.trim().toUpperCase().replace("ВВ", "VV");
-    const match = PROMO_CODES[normalized];
+    setLoading(true);
+    setStatus("");
 
-    if (!match) {
-      setStatus("Промокод не найден. Для теста используйте VV25.");
-      return;
+    try {
+      const match = PROMO_CODES[normalized] || (await fetchPartnerPromo(normalized));
+
+      if (!match) {
+        setStatus("Промокод не найден. Проверьте код или используйте VV25.");
+        return;
+      }
+
+      if (promo?.active && promo.code === match.code) {
+        setStatus("Промокод уже применён.");
+        return;
+      }
+
+      onApply({
+        ...match,
+        active: true
+      });
+      setStatus(
+        offer?.active
+          ? "Промокод сохранён. Система учтёт его при заказе."
+          : `Промокод применён. Скидка ${match.percent}% появится в корзине.`
+      );
+    } finally {
+      setLoading(false);
     }
-
-    if (promo?.active && promo.code === match.code) {
-      setStatus("Промокод уже применён.");
-      return;
-    }
-
-    onApply({
-      ...match,
-      active: true
-    });
-    setStatus(
-      offer?.active
-        ? "Промокод сохранён. Скидка останется 25%, без повторного удвоения."
-        : "Промокод применён. Скидка 25% появится в корзине."
-    );
   }
 
   return (
@@ -67,8 +88,8 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
           <span>Введите промокод</span>
           <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="VV25" />
         </label>
-        <button className="primary-action" type="button" onClick={applyPromo}>
-          Применить
+        <button className="primary-action" type="button" onClick={applyPromo} disabled={loading}>
+          {loading ? "Проверяем..." : "Применить"}
         </button>
         {status ? <p className="sheet-status">{status}</p> : null}
       </section>
