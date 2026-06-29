@@ -1,9 +1,10 @@
-const CACHE_VERSION = "vv-delivery-mvp-v1.2.0";
+const CACHE_VERSION = "vv-delivery-mvp-v1.3.0";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/admin.html",
   "/manifest.json",
+  "/site-manifest.json",
   "/admin-manifest.json",
   "/partner-manifest.json",
   "/icons/icon-192.png",

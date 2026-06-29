@@ -5,6 +5,7 @@ import CartSheet from "./components/CartSheet";
 import CheckoutSheet from "./components/CheckoutSheet";
 import HomeScreen from "./components/HomeScreen";
 import InfoSheet from "./components/InfoSheet";
+import MainSite from "./components/MainSite";
 import ProductModal from "./components/ProductModal";
 import ProfileSheet from "./components/ProfileSheet";
 import PromoCodeSheet from "./components/PromoCodeSheet";
@@ -298,8 +299,18 @@ function ClientApp() {
 
 export default function App() {
   const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
   const isAdmin = hostname.startsWith("admin.") || window.location.pathname.startsWith("/admin");
   const isPartner = hostname.startsWith("partners.") || window.location.pathname.startsWith("/partners");
+  const isDelivery =
+    hostname.startsWith("delivery.") ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    pathname.startsWith("/delivery");
+  const isSite =
+    hostname === "vmestevkusnee.ru" ||
+    hostname === "www.vmestevkusnee.ru" ||
+    pathname.startsWith("/site");
 
   useEffect(() => {
     const manifest = document.querySelector('link[rel="manifest"]');
@@ -316,15 +327,21 @@ export default function App() {
       manifest?.setAttribute("href", "/partner-manifest.json");
       appleTitle?.setAttribute("content", "ВВ Партнёры");
       theme?.setAttribute("content", "#11130f");
+    } else if (isSite && !isDelivery) {
+      document.title = "Вместе Вкуснее | Семейная пиццерия";
+      manifest?.setAttribute("href", "/site-manifest.json");
+      appleTitle?.setAttribute("content", "Вместе Вкуснее");
+      theme?.setAttribute("content", "#47633f");
     } else {
       document.title = "Вместе Вкуснее | Доставка";
       manifest?.setAttribute("href", "/manifest.json");
       appleTitle?.setAttribute("content", "ВВ Доставка");
       theme?.setAttribute("content", "#47633f");
     }
-  }, [isAdmin, isPartner]);
+  }, [isAdmin, isPartner, isDelivery, isSite]);
 
   if (isAdmin) return <AdminApp />;
   if (isPartner) return <PartnerApp />;
+  if (isSite && !isDelivery) return <MainSite />;
   return <ClientApp />;
 }

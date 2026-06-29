@@ -1,5 +1,13 @@
 # Add these blocks to /opt/apps/proxy/Caddyfile on the VPS.
-# vmestevkusnee.ru is intentionally not included here: keep it for the main site.
+
+vmestevkusnee.ru {
+  encode zstd gzip
+  reverse_proxy vv-delivery-app:3000
+}
+
+www.vmestevkusnee.ru {
+  redir https://vmestevkusnee.ru{uri} permanent
+}
 
 delivery.vmestevkusnee.ru {
   encode zstd gzip

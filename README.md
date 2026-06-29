@@ -177,10 +177,11 @@ curl https://your-domain.ru/api/health
 Публичные домены:
 
 ```text
+vmestevkusnee.ru           -> основной сайт пиццерии
+www.vmestevkusnee.ru       -> редирект на vmestevkusnee.ru
 delivery.vmestevkusnee.ru  -> PWA-доставка
 partners.vmestevkusnee.ru  -> кабинет блогера
 admin.vmestevkusnee.ru     -> админка
-vmestevkusnee.ru           -> будущий основной сайт, не редиректить на доставку
 ```
 
 В общий `/opt/apps/proxy/Caddyfile` добавьте блоки из `Caddyfile` в корне проекта.
