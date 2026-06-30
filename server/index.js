@@ -12,7 +12,13 @@ import {
   saveOrder,
   updateOrderStatus
 } from "./orders.js";
-import { buildTelegramMessage, validateOrder } from "./order-utils.js";
+import { validateOrder } from "./order-utils.js";
+import {
+  getMaxUpdates,
+  sendMaxTestNotification,
+  sendOrderNotification,
+  summarizeMaxUpdate
+} from "./notify.js";
 import {
   getPublicVapidKey,
   sendAdminNewOrderPush,
@@ -97,38 +103,6 @@ function withPartnerAttribution(order, promo) {
   };
 }
 
-async function sendTelegramOrder(order) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
-    const error = new Error("На сервере не заданы TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID");
-    error.statusCode = 500;
-    throw error;
-  }
-
-  const telegramResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: buildTelegramMessage(order),
-      disable_web_page_preview: true
-    })
-  });
-  const telegramData = await telegramResponse.json().catch(() => ({}));
-
-  if (!telegramResponse.ok || telegramData.ok === false) {
-    const error = new Error(telegramData.description || "Telegram API error");
-    error.statusCode = 502;
-    throw error;
-  }
-
-  return telegramData.result?.message_id || null;
-}
-
 app.get("/api/health", async (_request, response) => {
   try {
     await pool.query("select 1");
@@ -194,43 +168,52 @@ app.post("/api/send-order", async (request, response) => {
       order = withPartnerAttribution(order, partnerPromo);
     }
 
-    const telegramMessageId = await sendTelegramOrder(order);
-    let savedOrder = null;
-    let storageError = null;
+    const savedOrder = await saveOrder(order, null);
+    let notification = null;
     let partnerCommission = null;
     let adminPush = null;
 
     try {
-      savedOrder = await saveOrder(order, telegramMessageId);
       partnerCommission = await createCommissionForOrder(savedOrder);
     } catch (error) {
-      storageError = error;
-      console.error("Order was sent to Telegram but was not saved to PostgreSQL", error);
+      console.error("Order was saved but partner commission was not created", error);
     }
 
-    if (savedOrder) {
-      try {
-        adminPush = await sendAdminNewOrderPush(savedOrder);
-      } catch (error) {
-        adminPush = {
-          ok: false,
-          reason: "admin-push-failed",
-          message: error.message || String(error)
-        };
-        console.error("Order was saved but admin push was not sent", error);
-      }
+    try {
+      notification = await sendOrderNotification(savedOrder);
+    } catch (error) {
+      notification = {
+        ok: false,
+        provider: process.env.NOTIFY_PROVIDER || "auto",
+        reason: "notification-failed",
+        message: error.message || String(error)
+      };
+      console.error("Order was saved but messenger notification was not sent", error);
+    }
+
+    try {
+      adminPush = await sendAdminNewOrderPush(savedOrder);
+    } catch (error) {
+      adminPush = {
+        ok: false,
+        reason: "admin-push-failed",
+        message: error.message || String(error)
+      };
+      console.error("Order was saved but admin push was not sent", error);
     }
 
     return response.json({
       ok: true,
-      orderId: savedOrder?.id || null,
-      storage: savedOrder ? "saved" : "failed",
-      storageError: storageError ? storageError.message : null,
+      orderId: savedOrder.id,
+      storage: "saved",
+      notification,
       partnerCommission,
       adminPush
     });
   } catch (error) {
-    return jsonError(response, error.statusCode || 502, error.message || "Не удалось отправить заказ");
+    return jsonError(response, error.statusCode || 500, error.message || "Не удалось сохранить заказ", {
+      details: error.details || undefined
+    });
   }
 });
 
@@ -339,6 +322,47 @@ app.post("/api/admin/push", requireAdmin, async (request, response) => {
       name: error.name || "Error"
     });
   }
+});
+
+app.post("/api/admin/max-test", requireAdmin, async (_request, response) => {
+  try {
+    const notification = await sendMaxTestNotification();
+    return response.json({
+      ok: true,
+      notification
+    });
+  } catch (error) {
+    console.error("MAX test notification failed", error);
+    return jsonError(response, error.statusCode || 500, error.message || "Не удалось отправить тест в MAX", {
+      details: error.details || undefined
+    });
+  }
+});
+
+app.get("/api/admin/max-updates", requireAdmin, async (request, response) => {
+  try {
+    const updates = await getMaxUpdates(request.query.limit);
+    const rawUpdates = Array.isArray(updates) ? updates : updates.updates || updates.items || [];
+    return response.json({
+      ok: true,
+      updates: rawUpdates.map(summarizeMaxUpdate)
+    });
+  } catch (error) {
+    console.error("MAX updates fetch failed", error);
+    return jsonError(response, error.statusCode || 500, error.message || "Не удалось получить MAX updates", {
+      details: error.details || undefined
+    });
+  }
+});
+
+app.post("/api/max/webhook", (request, response) => {
+  const expectedSecret = process.env.MAX_WEBHOOK_SECRET;
+  if (expectedSecret && request.get("x-max-bot-api-secret") !== expectedSecret) {
+    return jsonError(response, 401, "Неверный MAX webhook secret");
+  }
+
+  console.log("MAX webhook update", summarizeMaxUpdate(request.body));
+  return response.json({ ok: true });
 });
 
 app.post("/api/partners/login", async (request, response) => {

@@ -121,7 +121,7 @@ Node API + статический dist
 ↓
 PostgreSQL
 ↓
-Telegram Bot API / Web Push
+MAX Bot API / Web Push
 ```
 
 Базовый запуск:
@@ -142,8 +142,9 @@ POSTGRES_DB=vv_delivery
 POSTGRES_USER=vv
 POSTGRES_PASSWORD=длинный_пароль_базы
 ADMIN_PASSWORD=пароль_админки
-TELEGRAM_BOT_TOKEN=токен_бота
-TELEGRAM_CHAT_ID=id_группы
+NOTIFY_PROVIDER=max
+MAX_BOT_TOKEN=токен_бота
+MAX_CHAT_ID=id_группы
 VAPID_PUBLIC_KEY=публичный_vapid_ключ
 VAPID_PRIVATE_KEY=приватный_vapid_ключ
 VAPID_SUBJECT=mailto:owner@example.com
@@ -230,8 +231,9 @@ POSTGRES_DB
 POSTGRES_USER
 POSTGRES_PASSWORD
 ADMIN_PASSWORD
-TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID
+NOTIFY_PROVIDER
+MAX_BOT_TOKEN
+MAX_CHAT_ID
 VAPID_PUBLIC_KEY
 VAPID_PRIVATE_KEY
 VAPID_SUBJECT
@@ -250,7 +252,9 @@ NETLIFY_BLOBS_SITE_ID
 NETLIFY_BLOBS_TOKEN
 ```
 
-Токен Telegram не используется во фронтенде. В VPS-режиме он читается только в `server/index.js`, в Netlify-режиме только в `netlify/functions/send-order.js`.
+Токены мессенджеров не используются во фронтенде. В VPS-режиме `MAX_BOT_TOKEN` и `MAX_CHAT_ID` читаются только сервером. В резервном Netlify-режиме Telegram-переменные всё ещё поддерживаются функцией `netlify/functions/send-order.js`.
+
+`NOTIFY_PROVIDER=max` включает отправку заказов в MAX. Для временного отключения внешних уведомлений можно поставить `NOTIFY_PROVIDER=none`: заказ сохранится в PostgreSQL и появится в админке, но сообщение в мессенджер не уйдёт.
 
 `ADMIN_PASSWORD` нужен для панели `/admin`. Пароль не вшивается во фронтенд: админ вводит его в форме, а сервер проверяет значение в API.
 
@@ -258,7 +262,29 @@ NETLIFY_BLOBS_TOKEN
 
 `NETLIFY_BLOBS_SITE_ID` и `NETLIFY_BLOBS_TOKEN` нужны только как запасной ручной режим для Netlify Blobs. В обычном Netlify Functions-окружении Blobs инициализируются через `connectLambda(event)`. Если `/.netlify/functions/blob-test` возвращает `MissingBlobsEnvironmentError`, добавьте эти две переменные: `NETLIFY_BLOBS_SITE_ID` равен Project ID сайта, а `NETLIFY_BLOBS_TOKEN` равен Netlify Personal Access Token с доступом к сайту.
 
-## Telegram-бот
+## MAX-бот
+
+Для VPS-режима основной канал уведомлений — MAX:
+
+```text
+NOTIFY_PROVIDER=max
+MAX_BOT_TOKEN=...
+MAX_CHAT_ID=...
+```
+
+`MAX_CHAT_ID` нельзя заменить названием группы. Создайте группу, добавьте туда бота и получите `chat_id` через debug-метод:
+
+```bash
+curl -H "x-admin-password: <ADMIN_PASSWORD>" https://admin.vmestevkusnee.ru/api/admin/max-updates
+```
+
+После установки `MAX_CHAT_ID` можно проверить отправку кнопкой с иконкой отправки в админке или запросом:
+
+```bash
+curl -X POST -H "x-admin-password: <ADMIN_PASSWORD>" https://admin.vmestevkusnee.ru/api/admin/max-test
+```
+
+## Telegram-бот для резервного Netlify-режима
 
 1. В Telegram откройте `@BotFather`.
 2. Создайте бота командой `/newbot`.
@@ -285,9 +311,9 @@ https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates
 6. Введите имя и телефон.
 7. Нажмите «Отправить заказ».
 
-Если env-переменные не заданы, API вернёт понятную ошибку про `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`.
+Если MAX-переменные не заданы, VPS API всё равно сохранит заказ в PostgreSQL и вернёт `notification.reason`. Внешнее уведомление не является критическим шагом оформления заказа.
 
-После успешной отправки в Telegram заказ сохраняется в PostgreSQL на VPS или в Netlify Blobs в резервном Netlify-режиме и появляется в админке.
+После успешного оформления заказ сохраняется в PostgreSQL на VPS или в Netlify Blobs в резервном Netlify-режиме и появляется в админке. Уведомление в MAX отправляется после сохранения заказа.
 
 ## Как проверить Netlify Blobs
 
@@ -390,7 +416,7 @@ Service Worker версионирован, чистит старые кэши п
 - Карточка товара с размерами, тестом, добавками и удалением ингредиентов
 - Корзина с количеством, удалением, upsell-блоком и итогами
 - Промокод `VV25`
-- Оформление заказа и отправка в Telegram через VPS API или Netlify Function
+- Оформление заказа через VPS API, сохранение в PostgreSQL и уведомление в MAX
 - Тестовая админка `/admin` с паролем, списком заказов и сменой статусов
 - Личный кабинет с адресом, локальной историей заказов, тестом уведомлений и очисткой данных
 - PWA manifest и service worker

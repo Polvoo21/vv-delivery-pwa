@@ -80,7 +80,7 @@ function formatItem(item, index) {
     .join("\n");
 }
 
-export function buildTelegramMessage(order) {
+export function buildOrderNotificationMessage(order) {
   const itemsText = order.items.map(formatItem).join("\n\n");
   const discountText = order.discount ? "да" : "нет";
   const partnerText = order.partner?.name
@@ -117,3 +117,5 @@ ${itemsText}
 
 Время: ${createdAt}`;
 }
+
+export const buildTelegramMessage = buildOrderNotificationMessage;

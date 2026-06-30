@@ -152,6 +152,8 @@ export default function AdminApp() {
   const [checkingSession, setCheckingSession] = useState(Boolean(savedPassword));
   const [pushStatus, setPushStatus] = useState("");
   const [pushLoading, setPushLoading] = useState(false);
+  const [maxStatus, setMaxStatus] = useState("");
+  const [maxLoading, setMaxLoading] = useState(false);
   const [partners, setPartners] = useState([]);
   const [partnerForm, setPartnerForm] = useState({
     name: "",
@@ -477,6 +479,34 @@ export default function AdminApp() {
     }
   }
 
+  async function testMaxNotification() {
+    if (!password || maxLoading) return;
+
+    setMaxLoading(true);
+    setMaxStatus("Отправляем тест в MAX...");
+
+    try {
+      const response = await fetch(apiPath("adminMaxTest"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password
+        }
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || "Не удалось отправить тест в MAX");
+      }
+
+      setMaxStatus("MAX-бот отправил тестовое сообщение в группу.");
+    } catch (maxError) {
+      setMaxStatus(maxError.message || "Не удалось отправить тест в MAX");
+    } finally {
+      setMaxLoading(false);
+    }
+  }
+
   if (!password) {
     return (
       <main className="admin-shell">
@@ -540,6 +570,15 @@ export default function AdminApp() {
           >
             <BellRing size={18} />
           </button>
+          <button
+            type="button"
+            onClick={testMaxNotification}
+            disabled={maxLoading}
+            aria-label="Отправить тест в MAX"
+            title="Отправить тест в MAX"
+          >
+            <Send size={18} />
+          </button>
           <button type="button" onClick={() => loadOrders()} disabled={loading} aria-label="Обновить">
             <RefreshCw size={18} />
           </button>
@@ -554,6 +593,9 @@ export default function AdminApp() {
       {error ? <div className="admin-alert">{error}</div> : null}
       {pushStatus ? (
         <div className={`admin-push-status ${pushStatus.includes("включён") ? "ok" : ""}`}>{pushStatus}</div>
+      ) : null}
+      {maxStatus ? (
+        <div className={`admin-push-status ${maxStatus.includes("отправил") ? "ok" : ""}`}>{maxStatus}</div>
       ) : null}
 
       <section className="admin-hero">
@@ -764,7 +806,7 @@ export default function AdminApp() {
             <p>
               {archivedCount
                 ? `Закрытые заказы скрыты из рабочего списка: ${archivedCount}.`
-                : "Оформите тестовый заказ в приложении, и он появится здесь после отправки в Telegram."}
+                : "Оформите тестовый заказ в приложении, и он появится здесь после сохранения в базе."}
             </p>
           </div>
         )}
