@@ -282,7 +282,7 @@ export default function AdminApp() {
         setDemoMode(true);
         setOrders(DEMO_ORDERS);
         setPartners([]);
-        setError("Локальный демо-режим: API доступен после запуска сервера или через netlify dev.");
+          setError("Локальный демо-режим: API доступен после запуска VPS-сервера или Docker Compose.");
       } else {
         setError(adminErrorMessage(fetchError));
       }

@@ -23,8 +23,6 @@ services:
     container_name: vv-delivery-app
     build:
       context: .
-      args:
-        VITE_API_MODE: vps
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-.env}

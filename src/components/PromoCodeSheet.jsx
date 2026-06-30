@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Percent, X } from "lucide-react";
 import { PROMO_CODES } from "../data/config";
 import { useSwipeDismiss } from "../utils/useSwipeDismiss";
-import { apiMode, apiPath } from "../utils/api";
+import { apiPath } from "../utils/api";
 
 export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
   const [value, setValue] = useState("");
@@ -11,8 +11,6 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
   const swipe = useSwipeDismiss(onClose);
 
   async function fetchPartnerPromo(code) {
-    if (apiMode !== "vps") return null;
-
     const response = await fetch(`${apiPath("promoCodes")}/${encodeURIComponent(code)}`);
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data.ok === false) {

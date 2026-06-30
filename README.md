@@ -1,79 +1,48 @@
-# Вместе Вкуснее | PWA-доставка
+# Вместе Вкуснее
 
-MVP PWA-приложения доставки и самовывоза для семейной пиццерии «Вместе Вкуснее». Проект можно запускать в двух режимах:
+Собственная платформа для сайта, доставки, админки и партнёрских кабинетов семейной пиццерии «Вместе Вкуснее».
 
-- рекомендуемый VPS-режим: React/Vite фронтенд + Node API + PostgreSQL + общий Caddy HTTPS-прокси;
-- резервный Netlify-режим: Vite build + Netlify Functions + Telegram + Netlify Blobs.
+Проект больше не использует Netlify. Продакшен работает на личном VPS через Docker, Caddy и PostgreSQL.
 
-Tilda в этой схеме не нужна: сайт, API, админка, база заказов и push-логика живут на своём сервере.
+## Текущая схема
+
+- `https://vmestevkusnee.ru` — публичная заглушка основного сайта.
+- `https://delivery.vmestevkusnee.ru` — публичная заглушка доставки до готовности запуска.
+- `https://admin.vmestevkusnee.ru` — админка заказов, партнёров и push-уведомлений.
+- `https://partners.vmestevkusnee.ru` — личный кабинет блогера/партнёра.
+- `https://vmestevkusnee.ru/dev` — внутренняя рабочая версия сайта для разработки.
 
 ## Технологии
 
 - React + Vite
-- Leaflet + OpenStreetMap/CARTO Voyager для карты без API-ключа
-- LocalStorage для адреса, корзины, промокода, профиля и истории заказов
-- Service Worker + Web App Manifest для PWA
-- Node.js + Express API для VPS
-- PostgreSQL для заказов и push-подписок администратора
-- Docker Compose для приложения и PostgreSQL
-- Caddy route для общего reverse proxy на VPS
-- Netlify Functions и Netlify Blobs оставлены как резервный способ деплоя
+- Express API
+- PostgreSQL
+- Docker Compose
+- Caddy reverse proxy
+- Web Push
+- MAX Bot API для уведомлений о заказах
 
-## Структура проекта
+## Структура
 
 ```text
 src/
-  main.jsx
-  App.jsx
-  data/
-    menu.js
-    config.js
-  components/
-    SplashScreen.jsx
-    AddressScreen.jsx
-    MapPicker.jsx
-    HomeScreen.jsx
-    StoriesRow.jsx
-    OfferBanner.jsx
-    CategoryTabs.jsx
-    ProductCard.jsx
-    ProductModal.jsx
-    CartSheet.jsx
-    CheckoutSheet.jsx
-    ProfileSheet.jsx
-    PromoCodeSheet.jsx
-    InfoSheet.jsx
-    Toast.jsx
-  utils/
-    storage.js
-    notifications.js
-    price.js
-    validators.js
-
-public/
-  manifest.json
-  admin-manifest.json
-  service-worker.js
-  icons/
-  assets/
-    pizza-main.webp
-
-netlify/
-  functions/
-    send-order.js
-    admin-orders.js
-    blob-test.js
-    push-config.js
-    lib/
-      orders-store.js
-      push.js
+  components/       React-экраны сайта, доставки, админки и партнёров
+  data/             меню и конфиг пиццерии
+  utils/            API, storage, price, notifications
 
 server/
-  index.js
-  db.js
-  orders.js
-  order-utils.js
-  push.js
+  index.js          Express API и SPA routes
+  db.js             PostgreSQL init/pool
+  orders.js         заказы, статусы, push subscriptions
+  partners.js       партнёры, промокоды, комиссии
+  notify.js         MAX/Telegram уведомления
+  push.js           Web Push
+
+public/
+  assets/           изображения
+  icons/            PWA icons
+  *manifest.json    PWA manifests
+  service-worker.js
 
 Dockerfile
 docker-compose.yml
@@ -81,88 +50,72 @@ Caddyfile
 .env.vps.example
 ```
 
-## Локальный запуск
+## Локальный запуск фронтенда
 
 ```bash
 npm install
 npm run dev
 ```
 
-Сборка:
+Обычный Vite dev server поднимает frontend. Для реальной проверки API нужен локальный сервер и PostgreSQL.
+
+## Локальный запуск API
+
+Создайте `.env` на основе `.env.vps.example`, поднимите PostgreSQL и запустите:
+
+```bash
+npm run server
+```
+
+Healthcheck:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+## Сборка
 
 ```bash
 npm run build
 npm run preview
 ```
 
-Запуск Node API локально требует PostgreSQL и `.env` с `DATABASE_URL`, поэтому для обычной проверки интерфейса достаточно `npm run dev`.
+## VPS env
 
-Для VPS-сборки фронтенд должен ходить в `/api/...`. В PowerShell:
+На сервере файл `.env` лежит рядом с `docker-compose.yml`.
 
-```powershell
-$env:VITE_API_MODE="vps"
-npm run build
-```
+Минимум:
 
-В Docker это уже настроено через `ARG VITE_API_MODE=vps`.
-
-## Деплой на VPS
-
-На текущем VPS уже есть общий Caddy-прокси в `/opt/apps/proxy`, который владеет портами `80` и `443`. Поэтому проект не публикует публичные порты и подключает web-контейнер к общей Docker-сети `edge`.
-
-Рекомендуемая схема:
-
-```text
-браузер/PWA
-↓
-Caddy HTTPS из /opt/apps/proxy
-↓
-Node API + статический dist
-↓
-PostgreSQL
-↓
-MAX Bot API / Web Push
-```
-
-Базовый запуск:
-
-```bash
-git clone https://github.com/Polvoo21/vv-delivery-pwa.git
-cd vv-delivery-pwa
-cp .env.vps.example .env
-nano .env
-docker compose up -d --build
-```
-
-В `.env` заполните:
-
-```text
-APP_DOMAIN=your-domain.ru
+```env
 POSTGRES_DB=vv_delivery
 POSTGRES_USER=vv
-POSTGRES_PASSWORD=длинный_пароль_базы
-ADMIN_PASSWORD=пароль_админки
+POSTGRES_PASSWORD=long_random_password
+
+ADMIN_PASSWORD=long_admin_password
+
 NOTIFY_PROVIDER=max
-MAX_BOT_TOKEN=токен_бота
-MAX_CHAT_ID=id_группы
-VAPID_PUBLIC_KEY=публичный_vapid_ключ
-VAPID_PRIVATE_KEY=приватный_vapid_ключ
+MAX_BOT_TOKEN=max_bot_token
+MAX_CHAT_ID=max_chat_id
+
+VAPID_PUBLIC_KEY=public_key
+VAPID_PRIVATE_KEY=private_key
 VAPID_SUBJECT=mailto:owner@example.com
 ```
 
-Перед публичным запуском направьте DNS A-запись домена на IP VPS `216.57.105.205`, затем добавьте блок из `Caddyfile` в `/opt/apps/proxy/Caddyfile` и перезагрузите Caddy:
+`TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` в коде сервера ещё поддерживаются как резервный legacy-провайдер, но текущая целевая схема — MAX.
+
+## Docker Compose
 
 ```bash
-docker compose -f /opt/apps/proxy/docker-compose.yml exec caddy caddy reload --config /etc/caddy/Caddyfile
+docker compose up -d --build
+docker compose ps
+docker compose logs -f app
 ```
 
-IP-адрес без HTTPS-домена годится только для черновой проверки. Установка PWA и Web Push на iPhone требуют HTTPS-домен.
-
-Проверка после запуска:
+Проверка:
 
 ```bash
-docker compose ps
-curl https://your-domain.ru/api/health
+curl https://vmestevkusnee.ru/api/health
 ```
 
 Ожидаемый ответ:
@@ -175,276 +128,127 @@ curl https://your-domain.ru/api/health
 }
 ```
 
-Публичные домены:
+## Caddy
+
+Caddy проксирует все домены в контейнер приложения:
 
 ```text
-vmestevkusnee.ru           -> основной сайт пиццерии
-www.vmestevkusnee.ru       -> редирект на vmestevkusnee.ru
-delivery.vmestevkusnee.ru  -> PWA-доставка
-partners.vmestevkusnee.ru  -> кабинет блогера
-admin.vmestevkusnee.ru     -> админка
+vmestevkusnee.ru
+delivery.vmestevkusnee.ru
+admin.vmestevkusnee.ru
+partners.vmestevkusnee.ru
 ```
 
-В общий `/opt/apps/proxy/Caddyfile` добавьте блоки из `Caddyfile` в корне проекта.
+Сертификаты выпускаются Caddy автоматически.
 
-Заказы на VPS хранятся в PostgreSQL. Старые заказы из Netlify Blobs автоматически не мигрируются; при необходимости нужен отдельный скрипт переноса.
+## Заказы
 
-Для локальной проверки Netlify Function удобнее использовать Netlify CLI:
-
-```bash
-netlify dev
-```
-
-## Деплой на Netlify
-
-Подключите GitHub-репозиторий к Netlify и укажите:
+Клиентский заказ отправляется в:
 
 ```text
-Build command: npm run build
-Publish directory: dist
-Functions directory: netlify/functions
+POST /api/send-order
 ```
 
-В репозитории уже есть `netlify.toml`:
+Сервер:
 
-```toml
-[build]
-  command = "npm run build"
-  publish = "dist"
+- валидирует заказ;
+- сохраняет его в PostgreSQL;
+- создаёт комиссию партнёра, если использован партнёрский промокод;
+- отправляет уведомление в MAX;
+- отправляет push администратору, если он включил уведомления.
 
-[functions]
-  directory = "netlify/functions"
+## Админка
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-```
-
-## Environment Variables
-
-Для VPS основные переменные лежат в `.env`:
+Админка доступна по:
 
 ```text
-APP_DOMAIN
-POSTGRES_DB
-POSTGRES_USER
-POSTGRES_PASSWORD
+https://admin.vmestevkusnee.ru
+```
+
+Пароль берётся из:
+
+```env
 ADMIN_PASSWORD
-NOTIFY_PROVIDER
-MAX_BOT_TOKEN
-MAX_CHAT_ID
+```
+
+Возможности:
+
+- список активных заказов;
+- смена статуса заказа;
+- закрытие заказа;
+- создание партнёров/блогеров;
+- промокоды партнёров;
+- тест push-уведомлений;
+- тест уведомления в MAX.
+
+## Партнёрский кабинет
+
+Партнёры заходят по:
+
+```text
+https://partners.vmestevkusnee.ru
+```
+
+Логин и пароль создаются вручную в админке. Партнёр видит:
+
+- свой промокод;
+- заказы по промокоду;
+- сумму заказа;
+- процент комиссии;
+- начисленную сумму.
+
+## PWA и push
+
+В проекте есть отдельные manifests:
+
+- `manifest.json` — доставка;
+- `site-manifest.json` — основной сайт;
+- `admin-manifest.json` — админка;
+- `partner-manifest.json` — партнёры.
+
+Service Worker кэширует shell и статические ассеты, но не кэширует `/api/*`.
+
+Для Web Push нужны:
+
+```env
 VAPID_PUBLIC_KEY
 VAPID_PRIVATE_KEY
 VAPID_SUBJECT
 ```
 
-Для резервного Netlify-деплоя добавьте:
+## Деплой на VPS
 
-```text
-TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID
-ADMIN_PASSWORD
-VAPID_PUBLIC_KEY
-VAPID_PRIVATE_KEY
-VAPID_SUBJECT
-NETLIFY_BLOBS_SITE_ID
-NETLIFY_BLOBS_TOKEN
-```
-
-Токены мессенджеров не используются во фронтенде. В VPS-режиме `MAX_BOT_TOKEN` и `MAX_CHAT_ID` читаются только сервером. В резервном Netlify-режиме Telegram-переменные всё ещё поддерживаются функцией `netlify/functions/send-order.js`.
-
-`NOTIFY_PROVIDER=max` включает отправку заказов в MAX. Для временного отключения внешних уведомлений можно поставить `NOTIFY_PROVIDER=none`: заказ сохранится в PostgreSQL и появится в админке, но сообщение в мессенджер не уйдёт.
-
-`ADMIN_PASSWORD` нужен для панели `/admin`. Пароль не вшивается во фронтенд: админ вводит его в форме, а сервер проверяет значение в API.
-
-`VAPID_PUBLIC_KEY` и `VAPID_PRIVATE_KEY` нужны для настоящих Web Push-уведомлений о смене статуса заказа. `VAPID_SUBJECT` можно указать как контакт, например `mailto:owner@example.com`.
-
-`NETLIFY_BLOBS_SITE_ID` и `NETLIFY_BLOBS_TOKEN` нужны только как запасной ручной режим для Netlify Blobs. В обычном Netlify Functions-окружении Blobs инициализируются через `connectLambda(event)`. Если `/.netlify/functions/blob-test` возвращает `MissingBlobsEnvironmentError`, добавьте эти две переменные: `NETLIFY_BLOBS_SITE_ID` равен Project ID сайта, а `NETLIFY_BLOBS_TOKEN` равен Netlify Personal Access Token с доступом к сайту.
-
-## MAX-бот
-
-Для VPS-режима основной канал уведомлений — MAX:
-
-```text
-NOTIFY_PROVIDER=max
-MAX_BOT_TOKEN=...
-MAX_CHAT_ID=...
-```
-
-`MAX_CHAT_ID` нельзя заменить названием группы. Создайте группу, добавьте туда бота и получите `chat_id` через debug-метод:
+Текущий ручной деплой:
 
 ```bash
-curl -H "x-admin-password: <ADMIN_PASSWORD>" https://admin.vmestevkusnee.ru/api/admin/max-updates
+git archive --format=tar.gz -o /tmp/vv-delivery.tar.gz HEAD
+scp /tmp/vv-delivery.tar.gz root@SERVER_IP:/tmp/vv-delivery.tar.gz
+ssh root@SERVER_IP
+cd /opt/apps/vv-delivery-pwa/repo
+tar -xzf /tmp/vv-delivery.tar.gz
+docker compose up -d --build app
 ```
 
-После установки `MAX_CHAT_ID` можно проверить отправку кнопкой с иконкой отправки в админке или запросом:
+Проверить после деплоя:
 
 ```bash
-curl -X POST -H "x-admin-password: <ADMIN_PASSWORD>" https://admin.vmestevkusnee.ru/api/admin/max-test
+docker compose ps
+curl https://vmestevkusnee.ru/api/health
 ```
 
-## Telegram-бот для резервного Netlify-режима
+## Важные ограничения
 
-1. В Telegram откройте `@BotFather`.
-2. Создайте бота командой `/newbot`.
-3. Скопируйте токен и добавьте его в Netlify как `TELEGRAM_BOT_TOKEN`.
-4. Добавьте бота в группу заявок.
-5. Напишите любое сообщение в группу.
-6. Откройте в браузере:
+- Основной сайт и доставка сейчас публично закрыты заглушками.
+- Доставка и рабочая версия сайта не должны рекламироваться как готовые до финального запуска.
+- Платёжная система пока не подключена.
+- Полноценной RBAC-системы для нескольких администраторов пока нет.
+- Партнёры создаются вручную через админку.
 
-```text
-https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates
-```
+## Следующий этап
 
-7. Найдите `chat.id` группы и добавьте его в Netlify как `TELEGRAM_CHAT_ID`.
-
-Для супергрупп chat id часто начинается с `-100`.
-
-## Как проверить заказ
-
-1. Запустите проект через Netlify или `netlify dev`.
-2. Выберите доставку или самовывоз.
-3. Добавьте товар в корзину.
-4. Примените промокод `VV25`, если нужно.
-5. Перейдите к оформлению.
-6. Введите имя и телефон.
-7. Нажмите «Отправить заказ».
-
-Если MAX-переменные не заданы, VPS API всё равно сохранит заказ в PostgreSQL и вернёт `notification.reason`. Внешнее уведомление не является критическим шагом оформления заказа.
-
-После успешного оформления заказ сохраняется в PostgreSQL на VPS или в Netlify Blobs в резервном Netlify-режиме и появляется в админке. Уведомление в MAX отправляется после сохранения заказа.
-
-## Как проверить Netlify Blobs
-
-После деплоя откройте:
-
-```text
-https://ваш-сайт.netlify.app/.netlify/functions/blob-test
-```
-
-Ожидаемый ответ:
-
-```json
-{
-  "ok": true,
-  "store": "vv-orders"
-}
-```
-
-Для тестовой записи отправьте `POST` на тот же адрес. Например из терминала:
-
-```bash
-curl -X POST https://ваш-сайт.netlify.app/.netlify/functions/blob-test
-```
-
-После этого в Netlify → Blobs должен появиться store `vv-orders` и ключи `orders-index`, `order:...`. Debug-функцию `blob-test.js` можно удалить после презентационной проверки.
-
-## Как проверить админку
-
-1. На VPS добавьте в `.env`, либо в Netlify добавьте env-переменную:
-
-```text
-ADMIN_PASSWORD=любой_тестовый_пароль
-```
-
-2. Сделайте redeploy.
-3. Откройте:
-
-```text
-https://ваш-сайт.netlify.app/admin
-```
-
-4. Введите пароль.
-5. Оформите тестовый заказ в клиентском приложении.
-6. Обновите админку и поменяйте статус:
-   - Принят;
-   - Готовится;
-   - У курьера;
-   - Доставлен.
-
-Если клиент разрешил уведомления при оформлении заказа, при смене статуса админкой ему придёт Web Push:
-
-```text
-Вместе Вкуснее
-Статус заказа #...: Готовится
-```
-
-Для генерации VAPID-ключей можно использовать пакет `web-push`:
-
-```bash
-npx web-push generate-vapid-keys
-```
-
-Затем добавьте значения в Netlify как `VAPID_PUBLIC_KEY` и `VAPID_PRIVATE_KEY`.
-
-Локально `/admin` открывается в демо-режиме, если проект запущен через обычный `npm run dev` или `npm run preview`. Для проверки реального VPS API используйте Docker Compose или локальный PostgreSQL + `npm run server`; для проверки Netlify Functions локально используйте `netlify dev`.
-
-Для отдельной иконки админки на iPhone откройте именно `/admin`, дождитесь загрузки экрана входа и добавьте страницу на экран «Домой». В проекте есть отдельный `admin.html` и `admin-manifest.json`, поэтому Netlify отдаёт для `/admin` админский manifest сразу до запуска React. Если раньше уже добавляли иконку, удалите её и добавьте заново: iOS может держать старый `start_url` из основного manifest. Safari может визуально показывать только домен без `/admin`, это нормально; проверять нужно по тому, какой экран открывается при запуске иконки.
-
-## Как проверить PWA
-
-1. Соберите и задеплойте проект на HTTPS-домене Netlify.
-2. Откройте сайт в Chrome/Edge.
-3. DevTools → Application:
-   - Manifest должен отображаться без критичных ошибок;
-   - Service Worker должен быть активен;
-   - Cache Storage не должен содержать запросы к `/.netlify/functions/*`.
-4. Установите приложение на главный экран и откройте в standalone-режиме.
-
-Service Worker версионирован, чистит старые кэши при активации и не кэширует Netlify Functions.
-
-## Как проверить уведомления
-
-1. Откройте личный кабинет.
-2. Нажмите «Отправить тестовое уведомление».
-3. Разрешите уведомления, если браузер спросит.
-4. Должно появиться уведомление:
-   - Заголовок: «Вместе Вкуснее»
-   - Текст: «Тестовое уведомление работает»
-
-На iPhone уведомления работают только в установленном PWA и после разрешения.
-
-## Что уже реализовано
-
-- Splash screen
-- Выбор доставки или самовывоза
-- Карта Чебоксар на Leaflet
-- Геопозиция и reverse geocoding через Nominatim
-- Сохранение адреса и повторный вход сразу на главный экран
-- Главный экран с историями, оффером, категориями и меню
-- Карточка товара с размерами, тестом, добавками и удалением ингредиентов
-- Корзина с количеством, удалением, upsell-блоком и итогами
-- Промокод `VV25`
-- Оформление заказа через VPS API, сохранение в PostgreSQL и уведомление в MAX
-- Тестовая админка `/admin` с паролем, списком заказов и сменой статусов
-- Личный кабинет с адресом, локальной историей заказов, тестом уведомлений и очисткой данных
-- PWA manifest и service worker
-
-## Известные ограничения
-
-- Клиентская история заказов хранится на устройстве. Серверная история на VPS хранится в PostgreSQL.
-- Админка защищена простым паролем для презентации, без ролей, пользователей и аудита.
-- Нет боевых удалённых push-уведомлений для всех клиентов.
-- Нет rate limit, капчи и антиспам-защиты.
-- Фото блюд пока тестовые. Основное фото пиццы лежит в `public/assets/pizza-main.webp`; остальные позиции подготовлены так, чтобы позже заменить визуалы на реальные фотографии.
-
-## Следующая версия
-
-- Supabase/PostgreSQL:
-  - таблица `orders`;
-  - таблица `order_items`;
-  - статусы заказов;
-  - профили клиентов;
-  - адреса клиентов.
-- Экран `/admin`:
-  - список заказов;
-  - смена статусов;
-  - комментарии администратора;
-  - фильтры и поиск.
-- Реальные push-уведомления:
-  - Web Push/FCM;
-  - хранение push subscriptions;
-  - уведомления клиенту при смене статуса.
-- Реальные фотографии блюд и актуальное меню.
-- Проверка зоны доставки и расчёт времени.
+- Завершить публичный сайт.
+- Завершить delivery PWA.
+- Настроить боевой MAX webhook.
+- Подключить онлайн-оплату.
+- Добавить роли пользователей.
+- Добавить нормальный CI/CD-деплой с GitHub на VPS.

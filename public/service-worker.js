@@ -1,4 +1,4 @@
-const CACHE_VERSION = "vv-delivery-mvp-v1.3.0";
+const CACHE_VERSION = "vv-delivery-mvp-v1.4.0";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -45,7 +45,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (request.method !== "GET") return;
-  if (url.pathname.startsWith("/.netlify/functions/")) return;
+  if (url.pathname.startsWith("/api/")) return;
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {

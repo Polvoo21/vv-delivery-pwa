@@ -7,8 +7,6 @@ RUN update-ca-certificates
 COPY package*.json ./
 RUN npm ci
 COPY . .
-ARG VITE_API_MODE=vps
-ENV VITE_API_MODE=$VITE_API_MODE
 RUN npm run build
 
 FROM node:22-alpine AS runner
