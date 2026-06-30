@@ -300,17 +300,19 @@ function ClientApp() {
 export default function App() {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
+  const isSitePath = pathname.startsWith("/site");
   const isAdmin = hostname.startsWith("admin.") || window.location.pathname.startsWith("/admin");
   const isPartner = hostname.startsWith("partners.") || window.location.pathname.startsWith("/partners");
   const isDelivery =
-    hostname.startsWith("delivery.") ||
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    pathname.startsWith("/delivery");
+    !isSitePath &&
+    (hostname.startsWith("delivery.") ||
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      pathname.startsWith("/delivery"));
   const isSite =
     hostname === "vmestevkusnee.ru" ||
     hostname === "www.vmestevkusnee.ru" ||
-    pathname.startsWith("/site");
+    isSitePath;
 
   useEffect(() => {
     const manifest = document.querySelector('link[rel="manifest"]');
