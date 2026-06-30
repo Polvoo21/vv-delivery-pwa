@@ -10,6 +10,7 @@ import ProductModal from "./components/ProductModal";
 import ProfileSheet from "./components/ProfileSheet";
 import PromoCodeSheet from "./components/PromoCodeSheet";
 import PartnerApp from "./components/PartnerApp";
+import SitePlaceholder from "./components/SitePlaceholder";
 import SplashScreen from "./components/SplashScreen";
 import Toast from "./components/Toast";
 import { OFFER_DISCOUNT } from "./data/config";
@@ -300,7 +301,8 @@ function ClientApp() {
 export default function App() {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
-  const isSitePath = pathname.startsWith("/site");
+  const isSitePath = pathname.startsWith("/site") || pathname.startsWith("/dev");
+  const isRootSitePath = pathname === "/" || pathname === "";
   const isAdmin = hostname.startsWith("admin.") || window.location.pathname.startsWith("/admin");
   const isPartner = hostname.startsWith("partners.") || window.location.pathname.startsWith("/partners");
   const isDelivery =
@@ -313,6 +315,9 @@ export default function App() {
     hostname === "vmestevkusnee.ru" ||
     hostname === "www.vmestevkusnee.ru" ||
     isSitePath;
+  const isPlaceholder =
+    (hostname === "vmestevkusnee.ru" || hostname === "www.vmestevkusnee.ru") &&
+    isRootSitePath;
 
   useEffect(() => {
     const manifest = document.querySelector('link[rel="manifest"]');
@@ -329,8 +334,13 @@ export default function App() {
       manifest?.setAttribute("href", "/partner-manifest.json");
       appleTitle?.setAttribute("content", "ВВ Партнёры");
       theme?.setAttribute("content", "#11130f");
+    } else if (isPlaceholder) {
+      document.title = "Вместе Вкуснее | Сайт в разработке";
+      manifest?.setAttribute("href", "/site-manifest.json");
+      appleTitle?.setAttribute("content", "Вместе Вкуснее");
+      theme?.setAttribute("content", "#47633f");
     } else if (isSite && !isDelivery) {
-      document.title = "Вместе Вкуснее | Семейная пиццерия";
+      document.title = "Вместе Вкуснее | Рабочая версия сайта";
       manifest?.setAttribute("href", "/site-manifest.json");
       appleTitle?.setAttribute("content", "Вместе Вкуснее");
       theme?.setAttribute("content", "#47633f");
@@ -340,10 +350,11 @@ export default function App() {
       appleTitle?.setAttribute("content", "ВВ Доставка");
       theme?.setAttribute("content", "#47633f");
     }
-  }, [isAdmin, isPartner, isDelivery, isSite]);
+  }, [isAdmin, isPartner, isDelivery, isSite, isPlaceholder]);
 
   if (isAdmin) return <AdminApp />;
   if (isPartner) return <PartnerApp />;
+  if (isPlaceholder) return <SitePlaceholder />;
   if (isSite && !isDelivery) return <MainSite />;
   return <ClientApp />;
 }

@@ -95,6 +95,185 @@ img {
   background: var(--bg);
 }
 
+.site-placeholder {
+  width: 100%;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: calc(env(safe-area-inset-top, 0px) + 22px) 18px calc(env(safe-area-inset-bottom, 0px) + 22px);
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255, 122, 26, 0.2), transparent 28%),
+    radial-gradient(circle at 88% 20%, rgba(71, 99, 63, 0.22), transparent 30%),
+    linear-gradient(145deg, #fff9ef 0%, #f6eddf 54%, #fff6e8 100%);
+  color: #27231f;
+}
+
+.site-placeholder::before {
+  content: "";
+  position: fixed;
+  inset: auto -10vw -18vh auto;
+  width: min(620px, 88vw);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: url("/assets/site/hero-pizza.webp") center/contain no-repeat;
+  opacity: 0.22;
+  transform: rotate(-12deg);
+  filter: drop-shadow(0 34px 36px rgba(73, 44, 18, 0.2));
+}
+
+.site-placeholder-card {
+  position: relative;
+  z-index: 1;
+  width: min(980px, 100%);
+  min-height: min(680px, calc(100dvh - 44px));
+  display: grid;
+  align-content: center;
+  gap: 28px;
+  overflow: hidden;
+  padding: clamp(24px, 6vw, 58px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: clamp(28px, 5vw, 48px);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(255, 249, 239, 0.72)),
+    rgba(255, 250, 241, 0.88);
+  box-shadow: 0 30px 90px rgba(83, 67, 46, 0.14);
+  backdrop-filter: blur(18px);
+}
+
+.site-placeholder-card::after {
+  content: "";
+  position: absolute;
+  right: clamp(18px, 6vw, 58px);
+  top: clamp(18px, 5vw, 48px);
+  width: min(210px, 30vw);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.92), transparent 28%),
+    linear-gradient(135deg, rgba(125, 147, 96, 0.22), rgba(207, 117, 102, 0.18));
+  opacity: 0.9;
+}
+
+.site-placeholder-brand,
+.site-placeholder-actions,
+.site-placeholder-info span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.site-placeholder-brand {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  gap: 12px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 14px 32px rgba(76, 61, 43, 0.08);
+  color: #c66b5e;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.site-placeholder-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.site-placeholder-content {
+  position: relative;
+  z-index: 1;
+  max-width: 690px;
+}
+
+.site-placeholder-kicker {
+  margin: 0 0 14px;
+  color: #66784d;
+  font-size: 13px;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-placeholder-content h1 {
+  margin: 0;
+  color: #393633;
+  font-size: clamp(44px, 8vw, 92px);
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.site-placeholder-content p:not(.site-placeholder-kicker) {
+  max-width: 620px;
+  margin: 20px 0 0;
+  color: #5f584f;
+  font-size: clamp(17px, 2vw, 22px);
+  line-height: 1.42;
+  font-weight: 700;
+}
+
+.site-placeholder-actions {
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.site-placeholder-actions a {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 22px;
+  border-radius: 999px;
+  color: #39342e;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(76, 61, 43, 0.1);
+  font-weight: 950;
+  text-decoration: none;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.site-placeholder-actions a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 40px rgba(76, 61, 43, 0.14);
+}
+
+.site-placeholder-actions .site-placeholder-primary {
+  color: #fff;
+  background: linear-gradient(135deg, #cf7566, #e98d3f);
+}
+
+.site-placeholder-info {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.site-placeholder-info span {
+  min-height: 42px;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(61, 54, 45, 0.1);
+  border-radius: 999px;
+  color: #5d564d;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.site-placeholder-info svg {
+  color: #7d9360;
+}
+
 /* Main public site redesign */
 .site-page {
   --site-cream: #f8f0e4;
@@ -3973,6 +4152,63 @@ img {
 }
 
 @media (max-width: 640px) {
+  .site-placeholder {
+    place-items: stretch;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+
+  .site-placeholder::before {
+    right: -28vw;
+    bottom: -10vh;
+    width: 112vw;
+    opacity: 0.18;
+  }
+
+  .site-placeholder-card {
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px);
+    align-content: end;
+    gap: 22px;
+    padding: 24px 18px;
+    border-radius: 30px;
+  }
+
+  .site-placeholder-card::after {
+    width: 152px;
+    right: -24px;
+    top: -22px;
+  }
+
+  .site-placeholder-brand {
+    align-self: start;
+  }
+
+  .site-placeholder-content h1 {
+    max-width: 340px;
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .site-placeholder-content p:not(.site-placeholder-kicker) {
+    font-size: 16px;
+    line-height: 1.38;
+  }
+
+  .site-placeholder-actions,
+  .site-placeholder-actions a,
+  .site-placeholder-info,
+  .site-placeholder-info span {
+    width: 100%;
+  }
+
+  .site-placeholder-actions a {
+    min-height: 50px;
+  }
+
+  .site-placeholder-info span {
+    justify-content: center;
+    border-radius: 18px;
+    text-align: center;
+  }
+
   .site-topbar {
     grid-template-columns: 1fr;
     gap: 12px;
