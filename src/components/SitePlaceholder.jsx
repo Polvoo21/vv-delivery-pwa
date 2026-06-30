@@ -1,15 +1,21 @@
-import { Clock, ExternalLink, MapPin, Phone, ShoppingBag } from "lucide-react";
+import { Clock, MapPin, Phone } from "lucide-react";
 import { RESTAURANT } from "../data/config";
-
-const PHONE = "+7 (8352) 66-77-77";
-const DELIVERY_URL = "https://delivery.vmestevkusnee.ru";
-const DEV_URL = "/dev";
 
 function telHref(phone) {
   return `tel:${phone.replace(/\D/g, "")}`;
 }
 
-export default function SitePlaceholder() {
+function mapHref() {
+  return `https://yandex.ru/maps/?text=${encodeURIComponent(RESTAURANT.address)}`;
+}
+
+export default function SitePlaceholder({ kind = "site" }) {
+  const isDelivery = kind === "delivery";
+  const title = isDelivery ? "Доставка скоро откроется" : "Сайт скоро откроется";
+  const text = isDelivery
+    ? "Мы готовим сервис доставки к запуску и проверяем все технические сценарии. Пока заказы принимаем только по телефону."
+    : "Мы переносим сайт на собственную платформу и готовим аккуратный запуск. По вопросам брони, меню и заказов можно позвонить нам.";
+
   return (
     <main className="site-placeholder">
       <section className="site-placeholder-card" aria-labelledby="placeholder-title">
@@ -20,24 +26,18 @@ export default function SitePlaceholder() {
 
         <div className="site-placeholder-content">
           <p className="site-placeholder-kicker">Семейная пиццерия в Чебоксарах</p>
-          <h1 id="placeholder-title">Сайт скоро откроется</h1>
-          <p>
-            Мы аккуратно переносим сайт на собственную платформу. Доставка и рабочая версия сервиса уже доступны.
-          </p>
+          <h1 id="placeholder-title">{title}</h1>
+          <p>{text}</p>
         </div>
 
         <div className="site-placeholder-actions" aria-label="Быстрые действия">
-          <a className="site-placeholder-primary" href={DELIVERY_URL}>
-            <ShoppingBag size={19} />
-            Оформить доставку
-          </a>
-          <a href={telHref(PHONE)}>
+          <a className="site-placeholder-primary" href={telHref(RESTAURANT.phone)}>
             <Phone size={18} />
             Позвонить
           </a>
-          <a href={DEV_URL}>
-            <ExternalLink size={18} />
-            Рабочая версия
+          <a href={mapHref()} target="_blank" rel="noreferrer">
+            <MapPin size={18} />
+            Адрес на карте
           </a>
         </div>
 
@@ -52,7 +52,7 @@ export default function SitePlaceholder() {
           </span>
           <span>
             <Phone size={17} />
-            {PHONE}
+            {RESTAURANT.phone}
           </span>
         </div>
       </section>

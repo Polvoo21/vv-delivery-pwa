@@ -305,6 +305,7 @@ export default function App() {
   const isRootSitePath = pathname === "/" || pathname === "";
   const isAdmin = hostname.startsWith("admin.") || window.location.pathname.startsWith("/admin");
   const isPartner = hostname.startsWith("partners.") || window.location.pathname.startsWith("/partners");
+  const isPublicDelivery = !isSitePath && (hostname.startsWith("delivery.") || pathname.startsWith("/delivery"));
   const isDelivery =
     !isSitePath &&
     (hostname.startsWith("delivery.") ||
@@ -334,6 +335,11 @@ export default function App() {
       manifest?.setAttribute("href", "/partner-manifest.json");
       appleTitle?.setAttribute("content", "ВВ Партнёры");
       theme?.setAttribute("content", "#11130f");
+    } else if (isPublicDelivery) {
+      document.title = "Вместе Вкуснее | Доставка скоро откроется";
+      manifest?.setAttribute("href", "/site-manifest.json");
+      appleTitle?.setAttribute("content", "Вместе Вкуснее");
+      theme?.setAttribute("content", "#47633f");
     } else if (isPlaceholder) {
       document.title = "Вместе Вкуснее | Сайт в разработке";
       manifest?.setAttribute("href", "/site-manifest.json");
@@ -350,10 +356,11 @@ export default function App() {
       appleTitle?.setAttribute("content", "ВВ Доставка");
       theme?.setAttribute("content", "#47633f");
     }
-  }, [isAdmin, isPartner, isDelivery, isSite, isPlaceholder]);
+  }, [isAdmin, isPartner, isDelivery, isSite, isPlaceholder, isPublicDelivery]);
 
   if (isAdmin) return <AdminApp />;
   if (isPartner) return <PartnerApp />;
+  if (isPublicDelivery) return <SitePlaceholder kind="delivery" />;
   if (isPlaceholder) return <SitePlaceholder />;
   if (isSite && !isDelivery) return <MainSite />;
   return <ClientApp />;
