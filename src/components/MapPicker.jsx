@@ -14,7 +14,7 @@ export default function MapPicker({ mode, coords, onCoordsChange, onAddressChang
   const mapNode = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
-  const restaurantMarkerRef = useRef(null);
+  const pizzeriaMarkerRef = useRef(null);
   const leafletRef = useRef(null);
   const [locating, setLocating] = useState(false);
 
@@ -36,8 +36,8 @@ export default function MapPicker({ mode, coords, onCoordsChange, onAddressChang
         iconAnchor: [17, 42]
       });
 
-      const restaurantIcon = leaflet.divIcon({
-        className: "vv-restaurant-pin",
+      const pizzeriaIcon = leaflet.divIcon({
+        className: "vv-pizzeria-pin",
         html: "<span>ВВ</span>",
         iconSize: [42, 42],
         iconAnchor: [21, 38]
@@ -46,7 +46,7 @@ export default function MapPicker({ mode, coords, onCoordsChange, onAddressChang
       const map = leaflet
         .map(mapNode.current, {
           zoomControl: false,
-          attributionControl: true,
+          attributionControl: false,
           dragging: true,
           tap: true
         })
@@ -54,13 +54,13 @@ export default function MapPicker({ mode, coords, onCoordsChange, onAddressChang
 
       leaflet
         .tileLayer(MAP_CONFIG.tileUrl, {
-          attribution: MAP_CONFIG.attribution,
+          attribution: "",
           maxZoom: 19
         })
         .addTo(map);
 
-      restaurantMarkerRef.current = leaflet
-        .marker([RESTAURANT.coords.lat, RESTAURANT.coords.lng], { icon: restaurantIcon })
+      pizzeriaMarkerRef.current = leaflet
+        .marker([RESTAURANT.coords.lat, RESTAURANT.coords.lng], { icon: pizzeriaIcon })
         .addTo(map)
         .bindPopup(`${RESTAURANT.name}<br>${RESTAURANT.address}`);
 

@@ -1,0 +1,218 @@
+:root {
+  background: #fff;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: #fff !important;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  background: #fff;
+}
+
+html:has(.site-showcase),
+body:has(.site-showcase),
+#root:has(.site-showcase) {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100% !important;
+  height: auto !important;
+}
+
+html:has(.site-showcase),
+body:has(.site-showcase) {
+  overflow-x: clip !important;
+  overscroll-behavior-x: none;
+}
+
+html:has(.site-showcase) {
+  overflow-y: auto !important;
+}
+
+body:has(.site-showcase),
+#root:has(.site-showcase) {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+  overscroll-behavior-x: none;
+}
+
+body:has(.site-showcase) {
+  margin: 0;
+  background: #fff;
+}
+
+html.site-cart-scroll-lock,
+body.site-cart-scroll-lock,
+html.site-cart-scroll-lock:has(.site-showcase),
+body.site-cart-scroll-lock:has(.site-showcase) {
+  overscroll-behavior: none !important;
+}
+
+html.site-cart-scroll-lock,
+html.site-cart-scroll-lock:has(.site-showcase) {
+  height: 100% !important;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+}
+
+body.site-cart-scroll-lock,
+body.site-cart-scroll-lock:has(.site-showcase) {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+}
+
+.site-showcase .site-cart-drawer-scrim,
+.site-showcase .site-product-modal-scrim,
+.site-showcase .site-product-review-photo-layer,
+.site-showcase .site-auth-scrim,
+.site-showcase .site-address-prompt-scrim,
+.site-showcase .site-address-modal-scrim,
+.site-showcase .site-checkout-modal-scrim,
+.site-showcase .site-gallery-lightbox-scrim,
+.site-showcase .site-lost-photo-scrim,
+.site-showcase .site-lost-contact-scrim,
+.site-showcase .site-recent-orders-scrim {
+  outline: none !important;
+  transform: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-showcase .site-cart-drawer-scrim:focus,
+.site-showcase .site-cart-drawer-scrim:focus-visible,
+.site-showcase .site-cart-drawer-scrim:active,
+.site-showcase .site-product-modal-scrim:focus,
+.site-showcase .site-product-modal-scrim:focus-visible,
+.site-showcase .site-product-modal-scrim:active,
+.site-showcase .site-product-review-photo-layer:focus,
+.site-showcase .site-product-review-photo-layer:focus-visible,
+.site-showcase .site-product-review-photo-layer:active,
+.site-showcase .site-auth-scrim:focus,
+.site-showcase .site-auth-scrim:focus-visible,
+.site-showcase .site-auth-scrim:active,
+.site-showcase .site-address-prompt-scrim:focus,
+.site-showcase .site-address-prompt-scrim:focus-visible,
+.site-showcase .site-address-prompt-scrim:active,
+.site-showcase .site-address-modal-scrim:focus,
+.site-showcase .site-address-modal-scrim:focus-visible,
+.site-showcase .site-address-modal-scrim:active,
+.site-showcase .site-checkout-modal-scrim:focus,
+.site-showcase .site-checkout-modal-scrim:focus-visible,
+.site-showcase .site-checkout-modal-scrim:active,
+.site-showcase .site-gallery-lightbox-scrim:focus,
+.site-showcase .site-gallery-lightbox-scrim:focus-visible,
+.site-showcase .site-gallery-lightbox-scrim:active,
+.site-showcase .site-lost-photo-scrim:focus,
+.site-showcase .site-lost-photo-scrim:focus-visible,
+.site-showcase .site-lost-photo-scrim:active,
+.site-showcase .site-lost-contact-scrim:focus,
+.site-showcase .site-lost-contact-scrim:focus-visible,
+.site-showcase .site-lost-contact-scrim:active,
+.site-showcase .site-recent-orders-scrim:focus,
+.site-showcase .site-recent-orders-scrim:focus-visible,
+.site-showcase .site-recent-orders-scrim:active {
+  outline: none !important;
+}
+
+.site-showcase,
+.site-showcase * {
+  box-sizing: border-box;
+}
+
+.site-showcase {
+  --vv-ink: #2b2723;
+  --vv-muted: #756c62;
+  --vv-soft: #f7f8fa;
+  --vv-card: rgba(255, 255, 255, 0.94);
+  --vv-line: rgba(67, 54, 43, 0.13);
+  --vv-green: #758b52;
+  --vv-green-dark: #536738;
+  --vv-coral: #ca7767;
+  --vv-orange: #ca7767;
+  --vv-orange-rgb: 202, 119, 103;
+  --vv-orange-hover: #b96558;
+  --vv-orange-light: #d98a7d;
+  --vv-orange-soft: #f5ded8;
+  --vv-orange-softer: #fbefec;
+  --vv-promo: #899565;
+  --vv-promo-rgb: 137, 149, 101;
+  --vv-promo-dark: #717c50;
+  --vv-promo-soft: #eef1e7;
+  --vv-dark: #282520;
+  --vv-radius-xl: 44px;
+  --vv-radius-lg: 30px;
+  --vv-radius-md: 22px;
+  --vv-radius-sm: 16px;
+  --vv-shadow-soft: 0 22px 70px rgba(68, 48, 24, 0.13);
+  --vv-shadow-card: 0 14px 38px rgba(69, 47, 22, 0.1);
+  --vv-shadow-lift: 0 22px 48px rgba(67, 47, 23, 0.16);
+  --vv-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --vv-sticky-menu-top: 62px;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 100vh;
+  margin: 0;
+  padding: 1px 0 38px;
+  isolation: isolate;
+  color: var(--vv-ink);
+  background: #fff;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+@supports not (overflow: clip) {
+  html:has(.site-showcase),
+  body:has(.site-showcase),
+  #root:has(.site-showcase),
+  .site-showcase {
+    overflow-x: hidden !important;
+  }
+}
+
+.site-showcase a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-showcase img {
+  display: block;
+  max-width: 100%;
+}
+
+.site-showcase :focus-visible {
+  outline: 3px solid rgba(var(--vv-orange-rgb), 0.42);
+  outline-offset: 3px;
+}
+
+.site-showcase input:focus,
+.site-showcase input:focus-visible,
+.site-showcase textarea:focus,
+.site-showcase textarea:focus-visible,
+.site-showcase select:focus,
+.site-showcase select:focus-visible {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+/* Dialogs receive programmatic focus for accessibility. Their own border and
+   shadow already define the surface, so a second focus ring is misleading. */
+.site-showcase [role="dialog"]:focus,
+.site-showcase [role="dialog"]:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}

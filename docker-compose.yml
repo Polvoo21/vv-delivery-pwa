@@ -30,6 +30,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgres://${POSTGRES_USER:-vv}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-vv_delivery}
+    volumes:
+      - ./public/uploads:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -41,11 +43,15 @@ services:
     networks:
       - internal
       - edge
+      - telegram_ipv6
 
 networks:
   internal:
   edge:
     external: true
+  telegram_ipv6:
+    external: true
+    name: vv-telegram-ipv6
 
 volumes:
   pgdata:

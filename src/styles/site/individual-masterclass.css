@@ -1,0 +1,850 @@
+.site-showcase.site-individual-masterclass-page {
+  --individual-text: #1f2328;
+  --individual-muted: #68707a;
+  --individual-border: #e1e4e8;
+  --individual-soft: #f3f4f6;
+  padding-bottom: 106px;
+  color: var(--individual-text);
+  background: #fff;
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact {
+  position: fixed;
+  z-index: 48;
+  bottom: 16px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  width: min(780px, calc(100% - 32px));
+  padding: 12px;
+  border: 1px solid var(--individual-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 16px 42px rgba(31, 35, 40, 0.16);
+  transform: translateX(-50%);
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact strong {
+  color: var(--individual-text);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact span {
+  overflow: hidden;
+  color: var(--individual-muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 17px;
+  border: 1px solid var(--individual-border);
+  border-radius: 12px;
+  color: var(--individual-text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact a:hover {
+  border-color: #cfd3d8;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact a:active {
+  transform: translateY(1px);
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact a.is-primary {
+  border-color: var(--vv-orange);
+  color: #fff;
+  background: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-sticky-contact a.is-primary:hover {
+  border-color: var(--vv-orange-hover);
+  background: var(--vv-orange-hover);
+}
+
+.site-showcase .site-individual-masterclass-promo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(260px, 0.42fr);
+  gap: 24px;
+  align-items: center;
+  width: min(1180px, calc(100% - 56px));
+  margin: 72px auto;
+  padding: 32px;
+  border: 1px solid #e1e4e8;
+  border-radius: 16px;
+  background: #f3f4f6;
+}
+
+.site-showcase .site-individual-masterclass-promo-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--vv-orange);
+  background: #fff;
+}
+
+.site-showcase .site-individual-masterclass-promo .site-eyebrow {
+  margin: 0 0 8px;
+  color: var(--vv-orange);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.site-showcase .site-individual-masterclass-promo h2 {
+  margin: 0;
+  color: #1f2328;
+  font-size: clamp(27px, 3vw, 38px);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  line-height: 1.06;
+}
+
+.site-showcase .site-individual-masterclass-promo-copy > p:not(.site-eyebrow) {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: #68707a;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.site-showcase .site-individual-masterclass-promo-copy small {
+  display: block;
+  margin-top: 10px;
+  color: #8a929c;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.site-showcase .site-individual-masterclass-promo-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.site-showcase .site-individual-masterclass-promo-actions a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid #d2d6db;
+  border-radius: 12px;
+  color: #1f2328;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.site-showcase .site-individual-masterclass-promo-actions a:hover {
+  border-color: #bfc4ca;
+  background: #f7f8fa;
+}
+
+.site-showcase .site-individual-masterclass-promo-actions a.is-primary {
+  flex-wrap: wrap;
+  border-color: var(--vv-orange);
+  color: #fff;
+  background: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-promo-actions a.is-primary:hover {
+  border-color: var(--vv-orange-hover);
+  background: var(--vv-orange-hover);
+}
+
+.site-showcase .site-individual-masterclass-promo-actions a span {
+  flex-basis: 100%;
+  font-size: 12px;
+  opacity: 0.88;
+}
+
+.site-showcase .site-individual-masterclass-hero,
+.site-showcase .site-individual-masterclass-answer,
+.site-showcase .site-individual-masterclass-process,
+.site-showcase .site-individual-masterclass-emotion,
+.site-showcase .site-individual-masterclass-details,
+.site-showcase .site-individual-masterclass-faq,
+.site-showcase .site-individual-masterclass-final {
+  width: min(1180px, calc(100% - 56px));
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.site-showcase .site-individual-masterclass-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.03fr) minmax(390px, 0.97fr);
+  gap: 54px;
+  align-items: center;
+  min-height: 650px;
+  padding: 46px 0 72px;
+}
+
+.site-showcase .site-individual-masterclass-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 54px;
+  padding: 0 15px;
+  border: 1px solid var(--individual-border);
+  border-radius: 999px;
+  color: var(--individual-text);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.site-showcase .site-individual-masterclass-back:hover {
+  border-color: #cfd3d8;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-page .site-eyebrow,
+.site-showcase .site-individual-masterclass-hero .site-eyebrow,
+.site-showcase .site-individual-masterclass-answer .site-eyebrow,
+.site-showcase .site-individual-masterclass-section-head .site-eyebrow,
+.site-showcase .site-individual-masterclass-emotion .site-eyebrow,
+.site-showcase .site-individual-masterclass-final .site-eyebrow {
+  margin: 0 0 12px;
+  color: var(--vv-orange);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.site-showcase .site-individual-masterclass-hero h1 {
+  margin: 0;
+  color: var(--individual-text);
+  font-size: clamp(42px, 5vw, 66px);
+  font-weight: 950;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.site-showcase .site-individual-masterclass-hero-copy > p:not(.site-eyebrow) {
+  max-width: 700px;
+  margin: 24px 0 0;
+  color: var(--individual-muted);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.site-showcase .site-individual-masterclass-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.site-showcase .site-individual-masterclass-hero-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 1px solid var(--individual-border);
+  border-radius: 999px;
+  color: var(--individual-text);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.site-showcase .site-individual-masterclass-hero-actions a:hover {
+  border-color: #cfd3d8;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-hero-actions a.is-primary {
+  border-color: var(--vv-orange);
+  color: #fff;
+  background: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-hero-actions a.is-primary:hover {
+  border-color: var(--vv-orange-hover);
+  background: var(--vv-orange-hover);
+}
+
+.site-showcase .site-individual-masterclass-contact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--individual-border);
+}
+
+.site-showcase .site-individual-masterclass-contact span {
+  color: var(--individual-muted);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.site-showcase .site-individual-masterclass-contact a {
+  flex: 0 0 auto;
+  color: var(--individual-text);
+  font-size: 16px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.site-showcase .site-individual-masterclass-hero-photo {
+  position: relative;
+  min-height: 520px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-hero-photo img {
+  display: block;
+  width: 100%;
+  height: 520px;
+  object-fit: cover;
+}
+
+.site-showcase .site-individual-masterclass-hero-photo figcaption {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  color: #fff;
+  background: rgba(31, 35, 40, 0.84);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.site-showcase .site-individual-masterclass-answer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(480px, 0.95fr);
+  gap: 54px;
+  align-items: center;
+  padding: 70px 0;
+  border-top: 1px solid var(--individual-border);
+}
+
+.site-showcase .site-individual-masterclass-answer h2,
+.site-showcase .site-individual-masterclass-section-head h2,
+.site-showcase .site-individual-masterclass-emotion h2,
+.site-showcase .site-individual-masterclass-final h2 {
+  margin: 0;
+  color: var(--individual-text);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 950;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+
+.site-showcase .site-individual-masterclass-answer > div > p:last-child,
+.site-showcase .site-individual-masterclass-section-head > p:last-child,
+.site-showcase .site-individual-masterclass-emotion > div > p:not(.site-eyebrow),
+.site-showcase .site-individual-masterclass-final > div > p:last-child {
+  margin: 18px 0 0;
+  color: var(--individual-muted);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.site-showcase .site-individual-masterclass-answer dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--individual-border);
+  border-radius: 14px;
+  background: var(--individual-border);
+}
+
+.site-showcase .site-individual-masterclass-answer dl div {
+  min-width: 0;
+  padding: 20px 16px;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-answer dl svg {
+  color: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-answer dt {
+  margin-top: 14px;
+  color: var(--individual-text);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.site-showcase .site-individual-masterclass-answer dd {
+  margin: 6px 0 0;
+  color: var(--individual-muted);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.site-showcase .site-individual-masterclass-process,
+.site-showcase .site-individual-masterclass-details,
+.site-showcase .site-individual-masterclass-faq {
+  padding: 76px 0;
+  border-top: 1px solid var(--individual-border);
+}
+
+.site-showcase .site-individual-masterclass-section-head {
+  max-width: 760px;
+}
+
+.site-showcase .site-individual-masterclass-process-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 36px;
+}
+
+.site-showcase .site-individual-masterclass-process-grid article {
+  min-height: 290px;
+  padding: 24px;
+  border: 1px solid var(--individual-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.site-showcase .site-individual-masterclass-process-grid article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-process-grid article > div span {
+  color: #a6adb5;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.site-showcase .site-individual-masterclass-process-grid h3,
+.site-showcase .site-individual-masterclass-details-grid h3,
+.site-showcase .site-individual-masterclass-faq-list h3 {
+  margin: 42px 0 0;
+  color: var(--individual-text);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.site-showcase .site-individual-masterclass-process-grid p,
+.site-showcase .site-individual-masterclass-faq-list p {
+  margin: 12px 0 0;
+  color: var(--individual-muted);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.site-showcase .site-individual-masterclass-emotion {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  border: 1px solid var(--individual-border);
+  border-radius: 18px;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-emotion figure {
+  min-height: 480px;
+  margin: 0;
+}
+
+.site-showcase .site-individual-masterclass-emotion img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  object-fit: cover;
+}
+
+.site-showcase .site-individual-masterclass-emotion > div {
+  align-self: center;
+  padding: 48px;
+}
+
+.site-showcase .site-individual-masterclass-details {
+  margin-top: 76px;
+}
+
+.site-showcase .site-individual-masterclass-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.site-showcase .site-individual-masterclass-details-grid article {
+  padding: 28px;
+  border: 1px solid var(--individual-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.site-showcase .site-individual-masterclass-details-grid article > svg {
+  color: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-details-grid h3 {
+  margin-top: 22px;
+}
+
+.site-showcase .site-individual-masterclass-details-grid ul {
+  display: grid;
+  gap: 11px;
+  margin: 18px 0 0;
+  padding-left: 20px;
+  color: var(--individual-muted);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.site-showcase .site-individual-masterclass-faq-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 36px;
+  overflow: hidden;
+  border: 1px solid var(--individual-border);
+  border-radius: 14px;
+  background: var(--individual-border);
+}
+
+.site-showcase .site-individual-masterclass-faq-list article {
+  min-height: 190px;
+  padding: 28px;
+  background: #fff;
+}
+
+.site-showcase .site-individual-masterclass-faq-list h3 {
+  margin-top: 0;
+}
+
+.site-showcase .site-individual-masterclass-final {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 92px;
+  padding: 42px;
+  border: 1px solid var(--individual-border);
+  border-radius: 18px;
+  background: var(--individual-soft);
+}
+
+.site-showcase .site-individual-masterclass-final > div {
+  max-width: 790px;
+}
+
+.site-showcase .site-individual-masterclass-final > div > svg {
+  margin-bottom: 22px;
+  color: var(--vv-orange);
+}
+
+.site-showcase .site-individual-masterclass-final > a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--vv-orange);
+  font-size: 15px;
+  font-weight: 900;
+  text-decoration: none;
+  transition: background 180ms ease;
+}
+
+.site-showcase .site-individual-masterclass-final > a:hover {
+  background: var(--vv-orange-hover);
+}
+
+.site-showcase.site-individual-masterclass-page a:focus-visible,
+.site-showcase .site-individual-masterclass-promo a:focus-visible {
+  outline: 3px solid rgba(var(--vv-orange-rgb), 0.35);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1024px) {
+  .site-showcase .site-individual-masterclass-promo {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .site-showcase .site-individual-masterclass-promo-actions {
+    grid-column: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-showcase .site-individual-masterclass-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 0.82fr);
+    gap: 36px;
+  }
+
+  .site-showcase .site-individual-masterclass-answer {
+    grid-template-columns: 1fr;
+  }
+
+  .site-showcase .site-individual-masterclass-process-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-showcase .site-individual-masterclass-process-grid article {
+    min-height: 250px;
+  }
+
+  .site-showcase .site-individual-masterclass-final {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 767px) {
+  .site-showcase.site-individual-masterclass-page {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .site-showcase .site-individual-masterclass-sticky-contact {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: 0 -8px 24px rgba(31, 35, 40, 0.12);
+    transform: none;
+  }
+
+  .site-showcase .site-individual-masterclass-sticky-contact > div {
+    display: none;
+  }
+
+  .site-showcase .site-individual-masterclass-sticky-contact a {
+    min-width: 0;
+    min-height: 52px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  .site-showcase .site-individual-masterclass-promo,
+  .site-showcase .site-individual-masterclass-hero,
+  .site-showcase .site-individual-masterclass-answer,
+  .site-showcase .site-individual-masterclass-process,
+  .site-showcase .site-individual-masterclass-emotion,
+  .site-showcase .site-individual-masterclass-details,
+  .site-showcase .site-individual-masterclass-faq,
+  .site-showcase .site-individual-masterclass-final {
+    width: min(100% - 32px, 560px);
+  }
+
+  .site-showcase .site-individual-masterclass-promo {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 54px;
+    margin-bottom: 54px;
+    padding: 24px;
+  }
+
+  .site-showcase .site-individual-masterclass-promo-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .site-showcase .site-individual-masterclass-promo-actions {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .site-showcase .site-individual-masterclass-hero {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    min-height: auto;
+    padding: 24px 0 56px;
+  }
+
+  .site-showcase .site-individual-masterclass-back {
+    margin-bottom: 42px;
+  }
+
+  .site-showcase .site-individual-masterclass-hero h1 {
+    font-size: clamp(38px, 11vw, 52px);
+  }
+
+  .site-showcase .site-individual-masterclass-hero-copy > p:not(.site-eyebrow) {
+    font-size: 16px;
+  }
+
+  .site-showcase .site-individual-masterclass-hero-actions {
+    display: grid;
+  }
+
+  .site-showcase .site-individual-masterclass-hero-actions a {
+    width: 100%;
+  }
+
+  .site-showcase .site-individual-masterclass-contact {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-showcase .site-individual-masterclass-hero-photo,
+  .site-showcase .site-individual-masterclass-hero-photo img {
+    min-height: 390px;
+    height: 390px;
+  }
+
+  .site-showcase .site-individual-masterclass-answer,
+  .site-showcase .site-individual-masterclass-process,
+  .site-showcase .site-individual-masterclass-details,
+  .site-showcase .site-individual-masterclass-faq {
+    padding: 58px 0;
+  }
+
+  .site-showcase .site-individual-masterclass-answer dl,
+  .site-showcase .site-individual-masterclass-process-grid,
+  .site-showcase .site-individual-masterclass-details-grid,
+  .site-showcase .site-individual-masterclass-faq-list {
+    grid-template-columns: 1fr;
+  }
+
+  .site-showcase .site-individual-masterclass-process-grid article,
+  .site-showcase .site-individual-masterclass-faq-list article {
+    min-height: 0;
+  }
+
+  .site-showcase .site-individual-masterclass-process-grid h3 {
+    margin-top: 34px;
+  }
+
+  .site-showcase .site-individual-masterclass-emotion {
+    grid-template-columns: 1fr;
+  }
+
+  .site-showcase .site-individual-masterclass-emotion figure,
+  .site-showcase .site-individual-masterclass-emotion img {
+    min-height: 340px;
+    height: 340px;
+  }
+
+  .site-showcase .site-individual-masterclass-emotion > div {
+    padding: 30px 24px;
+  }
+
+  .site-showcase .site-individual-masterclass-details {
+    margin-top: 58px;
+  }
+
+  .site-showcase .site-individual-masterclass-final {
+    gap: 28px;
+    margin-bottom: 64px;
+    padding: 28px 24px;
+  }
+
+  .site-showcase .site-individual-masterclass-final > a {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .site-showcase .site-individual-masterclass-promo,
+  .site-showcase .site-individual-masterclass-hero,
+  .site-showcase .site-individual-masterclass-answer,
+  .site-showcase .site-individual-masterclass-process,
+  .site-showcase .site-individual-masterclass-emotion,
+  .site-showcase .site-individual-masterclass-details,
+  .site-showcase .site-individual-masterclass-faq,
+  .site-showcase .site-individual-masterclass-final {
+    width: calc(100% - 24px);
+  }
+
+  .site-showcase .site-individual-masterclass-hero h1 {
+    font-size: 36px;
+  }
+
+  .site-showcase .site-individual-masterclass-final > a {
+    padding-right: 15px;
+    padding-left: 15px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-showcase.site-individual-masterclass-page *,
+  .site-showcase.site-individual-masterclass-page *::before,
+  .site-showcase.site-individual-masterclass-page *::after,
+  .site-showcase .site-individual-masterclass-promo *,
+  .site-showcase .site-individual-masterclass-promo *::before,
+  .site-showcase .site-individual-masterclass-promo *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

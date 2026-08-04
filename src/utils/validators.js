@@ -23,7 +23,10 @@ export function validateCheckout(order) {
 export const hasErrors = (errors) => Object.keys(errors).length > 0;
 
 export function normalizePhone(value) {
-  const digits = String(value || "").replace(/\D/g, "");
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("77")) {
+    digits = digits.slice(1);
+  }
   const normalized =
     digits.startsWith("8") && digits.length > 1
       ? `7${digits.slice(1)}`

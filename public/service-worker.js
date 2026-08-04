@@ -1,4 +1,4 @@
-const CACHE_VERSION = "vv-delivery-mvp-v1.4.0";
+const CACHE_VERSION = "vv-delivery-mvp-v1.7.1";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -6,6 +6,7 @@ const APP_SHELL = [
   "/manifest.json",
   "/site-manifest.json",
   "/admin-manifest.json",
+  "/admin-staff-manifest.json",
   "/partner-manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
@@ -47,6 +48,11 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (url.pathname.startsWith("/api/")) return;
   if (url.origin !== self.location.origin) return;
+
+  if (url.pathname === "/assets/site/delivery-zones.geojson") {
+    event.respondWith(fetch(request, { cache: "no-store" }).catch(() => caches.match(request)));
+    return;
+  }
 
   if (request.mode === "navigate") {
     const fallbackUrl = url.pathname.startsWith("/admin") ? "/admin.html" : "/index.html";

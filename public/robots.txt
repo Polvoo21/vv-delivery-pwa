@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /account/
+Disallow: /checkout
+Disallow: /payment
+Disallow: /partners
+Disallow: /dev/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /account/
+Disallow: /checkout
+Disallow: /payment
+Disallow: /partners
+Disallow: /dev/
+
+Sitemap: https://vmestevkusnee.ru/sitemap.xml

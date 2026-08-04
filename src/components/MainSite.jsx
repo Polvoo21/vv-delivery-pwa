@@ -1,282 +1,601 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Baby,
   CakeSlice,
+  CalendarCheck,
   ChefHat,
-  Clock,
-  Coffee,
-  Flame,
-  MapPin,
-  Phone,
-  Pizza,
-  Salad,
-  ShoppingBag,
-  Sparkles,
-  Star,
-  Truck
+  HeartHandshake,
+  Truck,
 } from "lucide-react";
-import { RESTAURANT } from "../data/config";
+import { CartDrawer } from "./site/CartDrawer";
+import { NewsRibbon } from "./site/NewsRibbon";
+import { SiteAboutSection } from "./site/SiteAboutSection";
+import {
+  SiteAddressModal,
+  SiteAddressPrompt,
+  readSiteFulfillment,
+  saveSiteFulfillment
+} from "./site/SiteAddressFlow";
+import { SiteFooter } from "./site/SiteFooter";
+import { SiteFaqSection } from "./site/SiteFaqSection";
+import { SiteGallerySection } from "./site/SiteGallerySection";
+import { SiteAuthModal } from "./site/SiteAuthModal";
+import { SITE_ONBOARDING_DEMO_MODE, SiteContactPhoneModal } from "./site/SiteContactPhoneModal";
+import { SiteHeader } from "./site/SiteHeader";
+import { SiteMapSection } from "./site/SiteMapSection";
+import { SiteMenuSection } from "./site/SiteMenuSection";
+import { SiteMobileCartFab } from "./site/SiteMobileCartFab";
+import { SiteProductModal } from "./site/SiteProductModal";
+import { SiteRecentOrders } from "./site/SiteRecentOrders";
+import { SiteSeoSection } from "./site/SiteSeoSection";
+import {
+  ASSET,
+  DELIVERY_URL,
+  RESTAURANT,
+  eventCards,
+  getSiteOrderPath,
+  siteComboItems
+} from "./site/siteData";
+import { fetchCurrentSiteCustomer, forgetSiteCustomer, rememberSiteCustomer } from "./site/customerSession";
+import { useBodyScrollLock } from "./site/hooks/useBodyScrollLock";
+import { useCartDrawer } from "./site/hooks/useCartDrawer";
+import { useCartSummary } from "./site/hooks/useCartSummary";
+import { useDeliverySettings } from "./site/hooks/useDeliverySettings";
+import { apiPath } from "../utils/api";
 import { MENU } from "../data/menu";
-import { formatPrice } from "../utils/price";
 
-const DELIVERY_URL = "https://delivery.vmestevkusnee.ru";
-const PARTNERS_URL = "https://partners.vmestevkusnee.ru";
-const PHONE = "+7 (8352) 66-77-77";
-
-const categoryTabs = [
-  { id: "pizza", label: "Пицца" },
-  { id: "lunch", label: "Обеды" },
-  { id: "dessert", label: "Десерты" },
-  { id: "drink", label: "Напитки" }
-];
-
-const storyCards = [
-  {
-    title: "Итальянское тесто",
-    text: "Готовим как в Италии",
-    image: "/assets/site/feature-dough.webp"
-  },
-  {
-    title: "Morello Forni",
-    text: "Печь из Италии",
-    image: "/assets/site/feature-oven.webp"
-  },
-  {
-    title: "Детская за стеклом",
-    text: "Видно из зала",
-    image: "/assets/site/feature-kids.webp"
-  },
-  {
-    title: "Завтраки и ланчи",
-    text: "Вкусно весь день",
-    image: "/assets/site/feature-breakfast.webp"
-  }
-];
-
-const trustItems = [
-  {
-    icon: Pizza,
-    title: "Пицца на правильном тесте",
-    text: "Румяный край, мягкая середина и понятные сочетания для всей семьи."
-  },
-  {
-    icon: Baby,
-    title: "Большая детская зона",
-    text: "Родители отдыхают за столом и видят ребёнка через стекло."
-  },
-  {
-    icon: Coffee,
-    title: "Завтраки, обеды, кофе",
-    text: "Формат на каждый день: утром, в обед, вечером домой."
-  }
-];
-
-const heroNews = [
-  {
-    title: "Летнее меню",
-    text: "Салаты, напитки и сезонные десерты",
-    image: "/assets/site/breakfast.webp"
-  },
-  {
-    title: "Детские праздники",
-    text: "Зал, пицца и игровая зона рядом",
-    image: "/assets/site/kids-zone.webp"
-  },
-  {
-    title: "Десерты к кофе",
-    text: "Бенто, капкейки и сладкие подарки",
-    image: "/assets/site/dessert.webp"
-  }
-];
-
-const productImages = {
-  pizza: "/assets/site/hero-pizza.webp",
-  lunch: "/assets/site/breakfast.webp",
-  dessert: "/assets/site/dessert.webp",
-  drink: "/assets/site/feature-breakfast.webp"
+const HEADER_COMPACT_ENTER_Y = 96;
+const HEADER_COMPACT_EXIT_Y = 8;
+const DEFAULT_SITE_STATS = {
+  deliveredOrdersToday: 0
 };
 
-const menuByCategory = categoryTabs.map((category) => ({
-  ...category,
-  items: MENU.filter((item) => item.category === category.id)
-}));
-
-function telHref(phone) {
-  return `tel:${phone.replace(/\D/g, "")}`;
+function hasSelectedFulfillment(fulfillment) {
+  return fulfillment?.mode === "pickup" || Boolean(fulfillment?.address);
 }
 
-function productImage(product) {
-  return product.image && product.category === "pizza" ? "/assets/site/hero-pizza.webp" : productImages[product.category];
+async function readApiJson(response) {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.ok !== true) {
+    throw new Error(data.error || "Не удалось выполнить запрос");
+  }
+  return data;
 }
 
 export default function MainSite() {
+  const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const isHeaderCompactRef = useRef(false);
+  const isPageOverlayLockedRef = useRef(false);
+  const [siteCustomer, setSiteCustomer] = useState(null);
+  const [isOnboardingSessionComplete, setIsOnboardingSessionComplete] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isRecentOrdersOpen, setIsRecentOrdersOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [siteStats, setSiteStats] = useState(DEFAULT_SITE_STATS);
+  const [siteRecentOrders, setSiteRecentOrders] = useState([]);
+  const [siteFulfillment, setSiteFulfillment] = useState(() => readSiteFulfillment());
+  const [pendingCartItem, setPendingCartItem] = useState(null);
+  const [editingCartLine, setEditingCartLine] = useState(null);
+  const [goToCheckoutAfterAuth, setGoToCheckoutAfterAuth] = useState(false);
+  const [isAddressPromptOpen, setIsAddressPromptOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressModalMode, setAddressModalMode] = useState("delivery");
+  const {
+    cartSummary,
+    cartItems,
+    hasCartItems,
+    cartItemsLabel,
+    syncCartSummary,
+    addCartItem,
+    addCartItems,
+    updateCartItemQty,
+    removeCartItem,
+    replaceCartItem,
+    applyCartPromo
+  } = useCartSummary();
+  const { deliverySettings } = useDeliverySettings();
+  const { isCartDrawerOpen, isCartDrawerVisible, isCartDrawerClosing, openCartDrawer, closeCartDrawer } =
+    useCartDrawer(syncCartSummary);
+
+  const editableProductById = useMemo(
+    () => new Map([...MENU, ...siteComboItems].filter((product) => product?.id).map((product) => [product.id, product])),
+    []
+  );
+
+  const closeProductModal = () => {
+    setSelectedProduct(null);
+    setEditingCartLine(null);
+  };
+  const hasRequiredOnboarding = Boolean(siteCustomer?.requiresOnboarding || siteCustomer?.requiresContactPhoneSetup);
+  const showOnboardingDemo = Boolean(
+    SITE_ONBOARDING_DEMO_MODE && siteCustomer?.id && !hasRequiredOnboarding && !isOnboardingSessionComplete
+  );
+  const needsOnboarding = hasRequiredOnboarding || showOnboardingDemo;
+  const isPageOverlayLocked =
+    Boolean(selectedProduct) ||
+    isCartDrawerOpen ||
+    isAddressPromptOpen ||
+    isAddressModalOpen ||
+    isAuthModalOpen ||
+    needsOnboarding ||
+    isRecentOrdersOpen;
+  isPageOverlayLockedRef.current = isPageOverlayLocked;
+
+  const cancelAddressSelection = () => {
+    setIsAddressPromptOpen(false);
+    setIsAddressModalOpen(false);
+    setPendingCartItem(null);
+  };
+
+  useBodyScrollLock(
+    isPageOverlayLocked,
+    () => {
+      if (needsOnboarding) {
+        return;
+      }
+
+      if (isAddressModalOpen || isAddressPromptOpen) {
+        cancelAddressSelection();
+        return;
+      }
+
+      if (selectedProduct) {
+        closeProductModal();
+        return;
+      }
+
+      if (isAuthModalOpen) {
+        setIsAuthModalOpen(false);
+        return;
+      }
+
+      if (isRecentOrdersOpen) {
+        setIsRecentOrdersOpen(false);
+        return;
+      }
+
+      closeCartDrawer();
+    }
+  );
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchCurrentSiteCustomer()
+      .then((customer) => {
+        if (!isCancelled) {
+          setSiteCustomer(customer || null);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setSiteCustomer(null);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("authLink")) {
+      setIsAuthModalOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("cart") !== "open") return;
+
+    openCartDrawer();
+    params.delete("cart");
+    const nextSearch = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`
+    );
+  }, [openCartDrawer]);
+
+  useEffect(() => {
+    if (!window.location.hash) {
+      return undefined;
+    }
+
+    let isCancelled = false;
+    let frame = 0;
+    const timers = [];
+
+    const scrollToHashTarget = () => {
+      if (isCancelled) {
+        return;
+      }
+
+      const targetId = decodeURIComponent(window.location.hash.slice(1));
+      const target = targetId ? document.getElementById(targetId) : null;
+
+      if (target) {
+        target.scrollIntoView({ block: "start", behavior: "auto" });
+      }
+    };
+
+    frame = window.requestAnimationFrame(scrollToHashTarget);
+    timers.push(window.setTimeout(scrollToHashTarget, 180));
+    timers.push(window.setTimeout(scrollToHashTarget, 520));
+
+    return () => {
+      isCancelled = true;
+
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetch(apiPath("siteStats"))
+      .then(readApiJson)
+      .then((data) => {
+        if (!isCancelled) {
+          setSiteStats({
+            deliveredOrdersToday: Number(data.deliveredOrdersToday || 0)
+          });
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setSiteStats(DEFAULT_SITE_STATS);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetch(apiPath("siteRecentOrders"))
+      .then(readApiJson)
+      .then((data) => {
+        if (!isCancelled) {
+          setSiteRecentOrders(Array.isArray(data.orders) ? data.orders : []);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setSiteRecentOrders([]);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const syncHeaderState = () => {
+      frame = 0;
+
+      if (isPageOverlayLockedRef.current || document.body.classList.contains("site-cart-scroll-lock")) {
+        return;
+      }
+
+      const current = isHeaderCompactRef.current;
+      const scrollY = window.scrollY;
+
+      if (!current && scrollY >= HEADER_COMPACT_ENTER_Y) {
+        isHeaderCompactRef.current = true;
+        setIsHeaderCompact(true);
+        return;
+      }
+
+      if (current && scrollY <= HEADER_COMPACT_EXIT_Y) {
+        isHeaderCompactRef.current = false;
+        setIsHeaderCompact(false);
+      }
+    };
+
+    const handleScroll = () => {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(syncHeaderState);
+    };
+
+    syncHeaderState();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const finishAddingCartItem = (cartItem) => {
+    if (editingCartLine) {
+      replaceCartItem(editingCartLine.index, {
+        ...cartItem,
+        qty: Math.max(1, Number(editingCartLine.qty || 1))
+      });
+      setEditingCartLine(null);
+    } else {
+      addCartItem(cartItem);
+    }
+
+    setPendingCartItem(null);
+    closeProductModal();
+    openCartDrawer();
+  };
+
+  const addProductToCart = (cartItem) => {
+    finishAddingCartItem(cartItem);
+  };
+
+  const addRecentOrderToCart = (order) => {
+    const now = Date.now();
+    const orderItems = (order?.items || []).map((item, index) => ({
+      ...item,
+      uid: `${item.productId || "recent"}-${order.id || "order"}-${now}-${index}`,
+      qty: Math.max(1, Number(item.qty || 1)),
+      unitPrice: Number(item.unitPrice || item.price || 0),
+      image: item.image || item.visual || "",
+      visual: item.visual || item.image || "",
+      addons: Array.isArray(item.addons) ? item.addons : [],
+      removed: Array.isArray(item.removed) ? item.removed : []
+    }));
+
+    if (!orderItems.length) {
+      return;
+    }
+
+    addCartItems(orderItems);
+    setIsRecentOrdersOpen(false);
+    openCartDrawer();
+  };
+
+  const getEditableProductFromCartItem = (item) => {
+    if (item?.productSnapshot?.id) {
+      return item.productSnapshot;
+    }
+
+    const productId = item?.productId || item?.id;
+    const knownProduct = productId ? editableProductById.get(productId) : null;
+
+    if (knownProduct) {
+      return knownProduct;
+    }
+
+    if (!item?.name) {
+      return null;
+    }
+
+    const comboItems = Array.isArray(item.comboItems)
+      ? item.comboItems.map((comboItem, index) => {
+          const source = editableProductById.get(comboItem?.id);
+          return (
+            source || {
+              id: comboItem?.id || `${productId || "combo"}-item-${index}`,
+              category: "pizza",
+              name: comboItem?.name || `Позиция ${index + 1}`,
+              weight: comboItem?.weight || "",
+              price: 0,
+              image: item.image
+            }
+          );
+        })
+      : [];
+
+    return {
+      id: productId || item.uid || "cart-item",
+      category: item.category || (comboItems.length ? "combo" : "pizza"),
+      name: item.name,
+      description: item.description || "",
+      weight: item.weight || "",
+      price: Number(item.unitPrice || item.price || 0),
+      image: item.image,
+      visual: item.visual,
+      ingredients: Array.isArray(item.ingredients) ? item.ingredients : [],
+      comboItems
+    };
+  };
+
+  const editCartItem = (item, index) => {
+    const productToEdit = getEditableProductFromCartItem(item);
+
+    if (!productToEdit) {
+      return;
+    }
+
+    setEditingCartLine({ index, qty: item.qty });
+    closeCartDrawer();
+    window.setTimeout(() => setSelectedProduct(productToEdit), 0);
+  };
+
+  const saveFulfillmentAndContinue = (fulfillment) => {
+    const nextFulfillment = saveSiteFulfillment(fulfillment);
+    setSiteFulfillment(nextFulfillment);
+    setIsAddressPromptOpen(false);
+    setIsAddressModalOpen(false);
+
+    if (pendingCartItem) {
+      finishAddingCartItem(pendingCartItem);
+    }
+  };
+
+  const logoutCustomer = async () => {
+    try {
+      await fetch(apiPath("customerAuthLogout"), {
+        method: "POST",
+        credentials: "include"
+      }).then(readApiJson);
+    } catch {
+      // The local preview can run without API. In that case just reset the UI state.
+    }
+
+    setSiteCustomer(null);
+    setIsOnboardingSessionComplete(false);
+    forgetSiteCustomer();
+    setIsAuthModalOpen(false);
+  };
+
+  const handleAuthenticated = (customer) => {
+    const nextCustomer = rememberSiteCustomer(customer);
+    setSiteCustomer(nextCustomer);
+
+    if (goToCheckoutAfterAuth) {
+      setGoToCheckoutAfterAuth(false);
+      window.location.href = DELIVERY_URL;
+    }
+  };
+
+  const requestCheckout = () => {
+    if (!hasCartItems) {
+      return;
+    }
+
+    if (!siteCustomer?.id) {
+      setGoToCheckoutAfterAuth(true);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    window.location.href = DELIVERY_URL;
+  };
+
   return (
-    <main className="site-shell site-page">
-      <header className="site-topbar">
-        <nav className="site-nav-left" aria-label="Основные разделы">
-          <a href="#about">О нас</a>
-          <a href="#menu">Меню</a>
-          <a href="#kids">Детская</a>
-          <a href="#contacts">Контакты</a>
-        </nav>
-        <a className="site-brand" href="#top" aria-label="Вместе Вкуснее">
-          <img src="/assets/site/vv-logo.png" alt="" />
-          <span>Вместе Вкуснее</span>
-        </a>
-        <div className="site-nav-right">
-          <a href={telHref(PHONE)}>{PHONE}</a>
-          <a href={PARTNERS_URL}>Личный кабинет</a>
-          <a className="site-book-btn" href="#contacts">Забронировать</a>
-        </div>
-      </header>
+    <main className={`site-showcase ${isHeaderCompact ? "is-header-compact" : ""}`}>
+      <SiteHeader
+        customer={siteCustomer}
+        hasCartItems={hasCartItems}
+        cartSummary={cartSummary}
+        isCartDrawerOpen={isCartDrawerOpen}
+        isCartDrawerClosing={isCartDrawerClosing}
+        deliverySettings={deliverySettings}
+        onAuthClick={() => setIsAuthModalOpen(true)}
+        onCartClick={openCartDrawer}
+      />
 
-      <section className="site-hero-v2" id="top">
-        <div className="site-hero-bg" />
-        <div className="site-hero-main">
-          <div className="site-pizza-stage">
-            <div className="site-note">
-              <span>Печь Morello Forni</span>
-              <b>Румяный край и живое тесто</b>
-            </div>
-            <img src="/assets/site/hero-pizza.webp" alt="Пицца Вместе Вкуснее" />
-          </div>
+      <CartDrawer
+        isOpen={isCartDrawerOpen}
+        isVisible={isCartDrawerVisible}
+        isClosing={isCartDrawerClosing}
+        hasItems={hasCartItems}
+        cartItems={cartItems}
+        cartItemsLabel={cartItemsLabel}
+        cartSummary={cartSummary}
+        onClose={closeCartDrawer}
+        onRemoveItem={removeCartItem}
+        onUpdateItemQty={updateCartItemQty}
+        onEditItem={editCartItem}
+        onApplyPromo={applyCartPromo}
+        onCheckout={requestCheckout}
+      />
 
-          <div className="site-hero-copy">
-            <div className="site-location-pill">
-              <MapPin size={16} />
-              Чебоксары, Пирогова 1Т
-            </div>
-            <p className="site-eyebrow">Семейная итальянская пиццерия</p>
-            <h1 className="site-hero-title">
-              <span className="site-title-desktop">Настоящая пицца</span>
-              <span className="site-title-mobile">Настоящая</span>
-              <span className="site-title-mobile">пицца</span>
-              <span>для всей семьи</span>
-            </h1>
-            <p className="site-hero-lead">
-              Пицца на правильном тесте, завтраки, обеды, праздники и большая детская зона за стеклом.
-            </p>
-            <div className="site-hero-actions-v2">
-              <a className="site-primary-btn" href="#menu">
-                <Salad size={19} />
-                Посмотреть меню
-              </a>
-              <a className="site-secondary-btn" href={DELIVERY_URL}>
-                <Truck size={19} />
-                Оформить доставку
-              </a>
-            </div>
-            <a className="site-dark-btn" href="#contacts">Забронировать стол</a>
-          </div>
+      <SiteMobileCartFab
+        hasCartItems={hasCartItems}
+        cartSummary={cartSummary}
+        isCartDrawerOpen={isCartDrawerOpen}
+        isCartDrawerClosing={isCartDrawerClosing}
+        onCartClick={openCartDrawer}
+      />
 
-          <aside className="site-news-stack" aria-label="Последние новости">
-            {heroNews.map((item) => (
-              <a href="#menu" className="site-news-card" key={item.title}>
-                <img src={item.image} alt="" loading="lazy" />
-                <span>{item.title}</span>
-                <b>{item.text}</b>
-              </a>
-            ))}
-          </aside>
-        </div>
+      <NewsRibbon />
 
-        <div className="site-story-rail" aria-label="Особенности пиццерии">
-          {storyCards.map((item) => (
-            <article className="site-story-card" key={item.title}>
-              <img src={item.image} alt="" loading="lazy" />
-              <div>
-                <b>{item.title}</b>
-                <span>{item.text}</span>
-              </div>
-            </article>
-          ))}
-          <a className="site-story-more" href="#about">
-            <Sparkles size={24} />
-            Последние новости
-          </a>
-        </div>
-      </section>
+      <SiteAboutSection
+        deliveredOrdersToday={siteStats.deliveredOrdersToday}
+        proofAddon={
+          <SiteRecentOrders
+            orders={siteRecentOrders}
+            isOpen={isRecentOrdersOpen}
+            onOpen={() => setIsRecentOrdersOpen(true)}
+            onClose={() => setIsRecentOrdersOpen(false)}
+            onAddOrder={addRecentOrderToCart}
+          />
+        }
+      />
 
-      <section className="site-section-v2 site-about" id="about">
-        <div className="site-section-heading">
-          <p className="site-eyebrow">Почему к нам возвращаются</p>
-          <h2>Уютный семейный формат без ощущения фудкорта</h2>
-        </div>
-        <div className="site-trust-grid">
-          {trustItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article className="site-trust-card" key={item.title}>
-                <Icon size={25} />
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+      <SiteMenuSection onProductOpen={setSelectedProduct} />
 
-      <section className="site-menu-section" id="menu">
-        <div className="site-menu-head">
-          <div>
-            <p className="site-eyebrow">Меню</p>
-            <h2>Пицца, обеды, десерты и напитки</h2>
-          </div>
-          <a href={DELIVERY_URL}>
-            <ShoppingBag size={18} />
-            Открыть доставку
-          </a>
-        </div>
+      <SiteProductModal
+        product={selectedProduct}
+        customer={siteCustomer}
+        onClose={closeProductModal}
+        onAddToCart={addProductToCart}
+      />
 
-        <div className="site-category-bar" aria-label="Категории меню">
-          {categoryTabs.map((category) => (
-            <a href={`#${category.id}`} key={category.id}>{category.label}</a>
-          ))}
-        </div>
+      {isAddressPromptOpen ? (
+        <SiteAddressPrompt
+          onClose={cancelAddressSelection}
+          onDelivery={() => {
+            setAddressModalMode("delivery");
+            setIsAddressPromptOpen(false);
+            setIsAddressModalOpen(true);
+          }}
+          onPickup={() => {
+            setAddressModalMode("pickup");
+            setIsAddressPromptOpen(false);
+            setIsAddressModalOpen(true);
+          }}
+          onLogin={() => {
+            setIsAddressPromptOpen(false);
+            setIsAuthModalOpen(true);
+          }}
+        />
+      ) : null}
 
-        <div className="site-products">
-          {menuByCategory.map((group) => (
-            <section className="site-product-group" id={group.id} key={group.id}>
-              <div className="site-product-group-title">
-                <h3>{group.label}</h3>
-                <span>{group.items.length} позиций</span>
-              </div>
-              <div className="site-product-grid">
-                {group.items.map((product) => (
-                  <article className="site-product-card" key={product.id}>
-                    <div className={`site-product-visual ${product.category === "pizza" ? "is-pizza" : ""}`}>
-                      <img src={productImage(product)} alt="" loading="lazy" />
-                      {product.featured ? (
-                        <span className="site-product-badge">
-                          <Flame size={14} />
-                          Хит
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="site-product-body">
-                      <h4>{product.name}</h4>
-                      <p>{product.description}</p>
-                    </div>
-                    <div className="site-product-bottom">
-                      <strong>от {formatPrice(product.price)} ₽</strong>
-                      <a href={DELIVERY_URL}>Выбрать</a>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </section>
+      {isAddressModalOpen ? (
+        <SiteAddressModal
+          initialFulfillment={{ ...siteFulfillment, mode: addressModalMode }}
+          onClose={cancelAddressSelection}
+          onSave={saveFulfillmentAndContinue}
+        />
+      ) : null}
+
+      {isAuthModalOpen && !needsOnboarding ? (
+        <SiteAuthModal
+          customer={siteCustomer}
+          onClose={() => setIsAuthModalOpen(false)}
+          onAuthenticated={handleAuthenticated}
+          onLogout={logoutCustomer}
+        />
+      ) : null}
+
+      {needsOnboarding ? (
+        <SiteContactPhoneModal
+          customer={siteCustomer}
+          onSaved={handleAuthenticated}
+          demoMode={showOnboardingDemo}
+          onComplete={() => setIsOnboardingSessionComplete(true)}
+        />
+      ) : null}
 
       <section className="site-section-v2 site-family-feature" id="kids">
-        <div className="site-family-photo">
-          <img src="/assets/site/interior.webp" alt="Зал пиццерии Вместе Вкуснее" loading="lazy" />
+        <div className="site-family-photo site-family-photo-stack">
+          <img src={`${ASSET}kids-zone-real.webp`} alt="Детская зона пиццерии Вместе Вкуснее" loading="lazy" />
+          <div className="site-photo-caption">
+            <Baby size={18} />
+            Большая детская зона за стеклом
+          </div>
         </div>
         <div className="site-family-panel">
           <p className="site-eyebrow">В зале</p>
           <h2>Родители отдыхают, дети играют рядом</h2>
           <p>
-            Детская зона за стеклом помогает провести вечер спокойно: ребёнок занят, а родители видят его из зала.
+            Детская зона за стеклом помогает провести вечер спокойно:
+            ребенок занят, а родители видят его из зала.
           </p>
           <div className="site-family-facts">
             <span>
@@ -292,38 +611,56 @@ export default function MainSite() {
               Праздники
             </span>
           </div>
+          <div className="site-family-note">
+            <HeartHandshake size={20} />
+            <span>Подходит для семейного ужина, дня рождения и спокойного обеда после прогулки.</span>
+          </div>
         </div>
       </section>
 
-      <section className="site-contacts-v2" id="contacts">
-        <div>
-          <p className="site-eyebrow">Контакты</p>
-          <h2>{RESTAURANT.address}</h2>
-          <span>
-            <Clock size={17} />
-            Ежедневно {RESTAURANT.workHours}
-          </span>
+      <section className="site-section-v2 site-events-section" id="events">
+        <div className="site-events-copy">
+          <p className="site-eyebrow">Праздники и встречи</p>
+          <h2>Можно прийти на ужин, а можно собрать событие</h2>
+          <p>
+            Для банкетов, детских дней рождения и семейных праздников поможем подобрать меню,
+            время и формат посадки.
+          </p>
+          <div className="site-events-actions">
+            <a className="site-primary-btn" href="#contacts">
+              <CalendarCheck size={18} />
+              Обсудить бронь
+            </a>
+            <a className="site-dark-btn" href={getSiteOrderPath()}>
+              <Truck size={18} />
+              Заказать домой
+            </a>
+          </div>
         </div>
-        <div className="site-contact-buttons">
-          <a href={telHref(PHONE)}>
-            <Phone size={18} />
-            {PHONE}
-          </a>
-          <a href={DELIVERY_URL}>
-            <ShoppingBag size={18} />
-            Заказать доставку
-          </a>
+        <div className="site-events-grid">
+          {eventCards.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article className="site-event-card" key={item.title}>
+                <Icon size={24} />
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      <footer className="site-footer">
-        <span>Вместе Вкуснее</span>
-        <span>Семейная пиццерия в Чебоксарах</span>
-        <span>
-          <Star size={15} />
-          MVP-сервис доставки
-        </span>
-      </footer>
+      <SiteGallerySection />
+
+      <SiteFaqSection />
+
+      <SiteMapSection />
+
+      <SiteSeoSection />
+
+      <SiteFooter />
+
     </main>
   );
 }

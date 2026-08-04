@@ -45,8 +45,8 @@ export function useSwipeDismiss(onDismiss, options = {}) {
   }
 
   function startGesture(pointerId, clientX, clientY, target, currentTarget) {
-    if (closing) return;
-    if (!canStartFrom(target)) return;
+    if (closing) return false;
+    if (!canStartFrom(target)) return false;
 
     gesture.current = {
       pointerId,
@@ -56,6 +56,8 @@ export function useSwipeDismiss(onDismiss, options = {}) {
       sheetHeight: currentTarget.getBoundingClientRect().height,
       dragging: false
     };
+
+    return true;
   }
 
   function moveGesture(pointerId, clientX, clientY, event) {
@@ -64,12 +66,14 @@ export function useSwipeDismiss(onDismiss, options = {}) {
 
     const deltaX = clientX - current.startX;
     const deltaY = clientY - current.startY;
-    const canPullDown = current.startScrollTop <= 0 && deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX);
+    const canPullDown = current.startScrollTop <= 0 && deltaY > 8 && Math.abs(deltaY) > Math.abs(deltaX);
 
     if (!current.dragging && !canPullDown) return;
 
     current.dragging = true;
-    event?.preventDefault?.();
+    if (event?.cancelable) {
+      event.preventDefault();
+    }
     offsetRef.current = Math.min(Math.max(deltaY, 0), current.sheetHeight + 80);
     setOffset(offsetRef.current);
   }
@@ -91,8 +95,10 @@ export function useSwipeDismiss(onDismiss, options = {}) {
 
   function onPointerDown(event) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
-    startGesture(event.pointerId, event.clientX, event.clientY, event.target, event.currentTarget);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const started = startGesture(event.pointerId, event.clientX, event.clientY, event.target, event.currentTarget);
+    if (started) {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
   }
 
   function onPointerMove(event) {

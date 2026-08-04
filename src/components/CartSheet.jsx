@@ -1,6 +1,7 @@
-import { Minus, Plus, Trash2, X } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { getUpsellProducts } from "../data/menu";
 import { calculateCartTotals, formatPrice } from "../utils/price";
+import { getProductInitials } from "../utils/productVisual";
 import { useSwipeDismiss } from "../utils/useSwipeDismiss";
 
 function itemMeta(item) {
@@ -27,6 +28,7 @@ export default function CartSheet({
   const totals = calculateCartTotals(cart, promo, offer);
   const upsell = getUpsellProducts();
   const swipe = useSwipeDismiss(onClose);
+  const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
   return (
     <div
@@ -47,7 +49,7 @@ export default function CartSheet({
         <div className="sheet-header">
           <div>
             <p className="eyebrow">Ваш заказ</p>
-            <h2>Корзина</h2>
+            <h2>{cart.length ? `${itemCount} товар на ${formatPrice(totals.total)} ₽` : "Корзина"}</h2>
           </div>
           <div className="sheet-actions">
             {cart.length ? (
@@ -66,7 +68,13 @@ export default function CartSheet({
             {cart.map((item) => (
               <article className="cart-item" key={item.uid}>
                 <div className={`cart-item-visual ${item.image ? "has-image" : ""}`}>
-                  {item.image ? <img src={item.image} alt="" /> : <span>{item.visual}</span>}
+                  {item.image ? (
+                    <img src={item.image} alt="" />
+                  ) : (
+                    <span className="product-placeholder" aria-hidden="true">
+                      {getProductInitials(item)}
+                    </span>
+                  )}
                 </div>
                 <div className="cart-item-copy">
                   <h3>{item.name}</h3>
@@ -90,7 +98,7 @@ export default function CartSheet({
           </div>
         ) : (
           <div className="empty-state">
-            <span>🛒</span>
+            <ShoppingBag size={40} aria-hidden="true" />
             <h3>Корзина пустая</h3>
             <p>Добавьте пиццу, десерт или напиток, и заказ появится здесь.</p>
           </div>
@@ -101,7 +109,9 @@ export default function CartSheet({
           <div className="upsell-row">
             {upsell.map((product) => (
               <button key={product.id} type="button" onClick={() => onAddUpsell(product)}>
-                <span>{product.visual}</span>
+                <span className="product-placeholder" aria-hidden="true">
+                  {getProductInitials(product)}
+                </span>
                 <b>{product.name}</b>
                 <small>{formatPrice(product.price)} ₽</small>
               </button>

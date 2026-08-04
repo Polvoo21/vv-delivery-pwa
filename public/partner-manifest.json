@@ -2,12 +2,13 @@
   "name": "Вместе Вкуснее | Партнёры",
   "short_name": "ВВ Партнёры",
   "description": "Кабинет партнёра «Вместе Вкуснее»: промокоды, заказы и начисления",
+  "id": "/partners",
   "start_url": "/partners",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#11130f",
-  "theme_color": "#11130f",
+  "background_color": "#f3f4f6",
+  "theme_color": "#ffffff",
   "categories": ["food", "business", "productivity"],
   "icons": [
     {

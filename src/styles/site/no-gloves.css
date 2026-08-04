@@ -1,0 +1,611 @@
+.site-showcase.site-no-gloves-page {
+  min-height: 100vh;
+  color: #15120f;
+  background: #fff;
+}
+
+.site-showcase .site-no-gloves-hero {
+  position: relative;
+  min-height: 570px;
+  overflow: hidden;
+  background: #f1f3f6;
+  isolation: isolate;
+}
+
+.site-showcase .site-no-gloves-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.66);
+  pointer-events: none;
+}
+
+.site-showcase .site-no-gloves-hero > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.72;
+}
+
+.site-showcase .site-no-gloves-hero-inner {
+  position: relative;
+  z-index: 2;
+  width: min(1180px, calc(100% - 56px));
+  min-height: inherit;
+  margin: 0 auto;
+  padding: 34px 0 72px;
+}
+
+.site-showcase .site-no-gloves-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  color: #15120f;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.site-showcase .site-no-gloves-back:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.site-showcase .site-no-gloves-hero-copy {
+  max-width: 690px;
+  margin-top: 92px;
+}
+
+.site-showcase .site-no-gloves-hero-copy .site-eyebrow,
+.site-showcase .site-no-gloves-section-head .site-eyebrow {
+  margin: 0;
+  color: var(--vv-orange);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.site-showcase .site-no-gloves-hero-copy h1 {
+  margin: 14px 0 0;
+  color: #15120f;
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.site-showcase .site-no-gloves-hero-copy p {
+  max-width: 640px;
+  margin: 22px 0 0;
+  color: #30343a;
+  font-size: clamp(18px, 2vw, 23px);
+  font-weight: 720;
+  line-height: 1.38;
+}
+
+.site-showcase .site-no-gloves-lead,
+.site-showcase .site-no-gloves-myths,
+.site-showcase .site-no-gloves-standards,
+.site-showcase .site-no-gloves-when,
+.site-showcase .site-no-gloves-practice,
+.site-showcase .site-no-gloves-sources,
+.site-showcase .site-no-gloves-final {
+  width: min(1040px, calc(100% - 56px));
+  margin-inline: auto;
+}
+
+.site-showcase .site-no-gloves-lead {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 44px;
+  padding: 54px 0 18px;
+}
+
+.site-showcase .site-no-gloves-lead article {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+}
+
+.site-showcase .site-no-gloves-lead svg,
+.site-showcase .site-no-gloves-heat svg,
+.site-showcase .site-no-gloves-when svg,
+.site-showcase .site-no-gloves-practice svg,
+.site-showcase .site-no-gloves-sources svg,
+.site-showcase .site-no-gloves-final svg {
+  color: var(--vv-orange);
+}
+
+.site-showcase .site-no-gloves-lead h2,
+.site-showcase .site-no-gloves-myth-list h3,
+.site-showcase .site-no-gloves-practice-grid h3 {
+  margin: 0;
+  color: #15120f;
+  font-weight: 950;
+  line-height: 1.08;
+}
+
+.site-showcase .site-no-gloves-lead h2 {
+  font-size: 22px;
+}
+
+.site-showcase .site-no-gloves-lead p,
+.site-showcase .site-no-gloves-section-head p,
+.site-showcase .site-no-gloves-myth-list p,
+.site-showcase .site-no-gloves-heat p,
+.site-showcase .site-no-gloves-standards-grid p,
+.site-showcase .site-no-gloves-when p,
+.site-showcase .site-no-gloves-when li,
+.site-showcase .site-no-gloves-practice-grid p,
+.site-showcase .site-no-gloves-sources p,
+.site-showcase .site-no-gloves-final p {
+  margin: 0;
+  color: #5f6873;
+  font-size: 16px;
+  font-weight: 680;
+  line-height: 1.52;
+}
+
+.site-showcase .site-no-gloves-myths,
+.site-showcase .site-no-gloves-standards,
+.site-showcase .site-no-gloves-practice {
+  padding: 72px 0 0;
+}
+
+.site-showcase .site-no-gloves-section-head {
+  display: grid;
+  gap: 14px;
+  max-width: 820px;
+}
+
+.site-showcase .site-no-gloves-section-head h2,
+.site-showcase .site-no-gloves-heat h2,
+.site-showcase .site-no-gloves-when h2,
+.site-showcase .site-no-gloves-sources h2,
+.site-showcase .site-no-gloves-final h2 {
+  margin: 0;
+  color: #15120f;
+  font-size: clamp(34px, 4vw, 54px);
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.site-showcase .site-no-gloves-section-head p {
+  max-width: 760px;
+  font-size: 17px;
+}
+
+.site-showcase .site-no-gloves-myth-list {
+  display: grid;
+  margin-top: 34px;
+  border-top: 1px solid #e5e8ec;
+}
+
+.site-showcase .site-no-gloves-myth-list article {
+  display: grid;
+  grid-template-columns: 72px minmax(210px, 0.42fr) minmax(0, 0.58fr);
+  gap: 22px;
+  align-items: start;
+  padding: 25px 0;
+  border-bottom: 1px solid #e5e8ec;
+}
+
+.site-showcase .site-no-gloves-myth-list article > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: var(--vv-orange);
+  background: var(--vv-orange-softer);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.site-showcase .site-no-gloves-myth-list h3 {
+  font-size: 20px;
+}
+
+.site-showcase .site-no-gloves-heat {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: 430px;
+  margin-top: 76px;
+  overflow: hidden;
+  color: #fff;
+  background: #171512;
+  isolation: isolate;
+}
+
+.site-showcase .site-no-gloves-heat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.48);
+  pointer-events: none;
+}
+
+.site-showcase .site-no-gloves-heat img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.site-showcase .site-no-gloves-heat div {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 16px;
+  width: min(1040px, calc(100% - 56px));
+  max-width: 620px;
+  margin: 0 auto;
+  margin-left: max(28px, calc((100% - 1040px) / 2));
+}
+
+.site-showcase .site-no-gloves-heat h2,
+.site-showcase .site-no-gloves-heat p {
+  color: #fff;
+}
+
+.site-showcase .site-no-gloves-heat p {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.site-showcase .site-no-gloves-standards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 34px;
+  margin-top: 34px;
+  border-top: 1px solid #e5e8ec;
+}
+
+.site-showcase .site-no-gloves-standards-grid article {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+  padding: 18px 0;
+  border-bottom: 1px solid #e5e8ec;
+}
+
+.site-showcase .site-no-gloves-standards-grid svg {
+  margin-top: 2px;
+  color: #159947;
+}
+
+.site-showcase .site-no-gloves-standards-grid p {
+  color: #3b4047;
+  font-weight: 760;
+}
+
+.site-showcase .site-no-gloves-when {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  gap: 40px;
+  margin-top: 70px;
+  padding: 34px;
+  border: 1px solid #e5e8ec;
+  border-radius: 20px;
+  background: #f7f8fa;
+}
+
+.site-showcase .site-no-gloves-when > div {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.site-showcase .site-no-gloves-when ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-showcase .site-no-gloves-when li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  color: #3b4047;
+  font-weight: 760;
+}
+
+.site-showcase .site-no-gloves-when li span {
+  width: 7px;
+  height: 7px;
+  margin-top: 9px;
+  border-radius: 999px;
+  background: var(--vv-orange);
+}
+
+.site-showcase .site-no-gloves-practice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 30px;
+}
+
+.site-showcase .site-no-gloves-practice-grid article {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 220px;
+  padding: 24px;
+  border: 1px solid #e5e8ec;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.site-showcase .site-no-gloves-practice-grid h3 {
+  font-size: 22px;
+}
+
+.site-showcase .site-no-gloves-sources {
+  display: grid;
+  grid-template-columns: minmax(0, 0.58fr) minmax(280px, 0.42fr);
+  gap: 34px;
+  margin-top: 70px;
+  padding: 30px 0;
+  border-top: 1px solid #e5e8ec;
+  border-bottom: 1px solid #e5e8ec;
+}
+
+.site-showcase .site-no-gloves-sources > div:first-child {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.site-showcase .site-no-gloves-source-links {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.site-showcase .site-no-gloves-source-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #e5e8ec;
+  border-radius: 12px;
+  color: #15120f;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.site-showcase .site-no-gloves-source-links a:hover {
+  border-color: rgba(var(--vv-orange-rgb), 0.28);
+  background: var(--vv-orange-softer);
+}
+
+.site-showcase .site-no-gloves-final {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin-top: 62px;
+  margin-bottom: 58px;
+  padding: 34px;
+  border-radius: 20px;
+  color: #fff;
+  background: #1f2328;
+}
+
+.site-showcase .site-no-gloves-final > div:first-child {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.site-showcase .site-no-gloves-final h2,
+.site-showcase .site-no-gloves-final p {
+  color: #fff;
+}
+
+.site-showcase .site-no-gloves-final p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.site-showcase .site-no-gloves-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.site-showcase .site-no-gloves-actions .site-primary-btn,
+.site-showcase .site-no-gloves-actions .site-dark-btn {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.site-showcase .site-no-gloves-actions .site-primary-btn {
+  color: #fff;
+  background: var(--vv-orange);
+}
+
+.site-showcase .site-no-gloves-actions .site-primary-btn:hover {
+  background: var(--vv-orange-hover);
+}
+
+.site-showcase .site-no-gloves-actions .site-dark-btn {
+  color: #15120f;
+  background: #fff;
+}
+
+.site-showcase .site-no-gloves-actions .site-dark-btn:hover {
+  background: #f1f3f6;
+}
+
+@media (max-width: 980px) {
+  .site-showcase .site-no-gloves-hero-inner,
+  .site-showcase .site-no-gloves-lead,
+  .site-showcase .site-no-gloves-myths,
+  .site-showcase .site-no-gloves-standards,
+  .site-showcase .site-no-gloves-when,
+  .site-showcase .site-no-gloves-practice,
+  .site-showcase .site-no-gloves-sources,
+  .site-showcase .site-no-gloves-final {
+    width: calc(100% - 40px);
+  }
+
+  .site-showcase .site-no-gloves-lead,
+  .site-showcase .site-no-gloves-standards-grid,
+  .site-showcase .site-no-gloves-practice-grid,
+  .site-showcase .site-no-gloves-sources {
+    grid-template-columns: 1fr;
+  }
+
+  .site-showcase .site-no-gloves-myth-list article {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .site-showcase .site-no-gloves-myth-list p {
+    grid-column: 2;
+  }
+
+  .site-showcase .site-no-gloves-when {
+    grid-template-columns: 1fr;
+  }
+
+  .site-showcase .site-no-gloves-final {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .site-showcase .site-no-gloves-hero {
+    min-height: 560px;
+  }
+
+  .site-showcase .site-no-gloves-hero-inner,
+  .site-showcase .site-no-gloves-lead,
+  .site-showcase .site-no-gloves-myths,
+  .site-showcase .site-no-gloves-standards,
+  .site-showcase .site-no-gloves-when,
+  .site-showcase .site-no-gloves-practice,
+  .site-showcase .site-no-gloves-sources,
+  .site-showcase .site-no-gloves-final {
+    width: calc(100% - 28px);
+  }
+
+  .site-showcase .site-no-gloves-hero-inner {
+    padding: 18px 0 42px;
+  }
+
+  .site-showcase .site-no-gloves-hero-copy {
+    margin-top: 88px;
+  }
+
+  .site-showcase .site-no-gloves-hero-copy h1 {
+    font-size: 40px;
+  }
+
+  .site-showcase .site-no-gloves-hero-copy p,
+  .site-showcase .site-no-gloves-section-head p,
+  .site-showcase .site-no-gloves-lead p,
+  .site-showcase .site-no-gloves-myth-list p,
+  .site-showcase .site-no-gloves-heat p,
+  .site-showcase .site-no-gloves-standards-grid p,
+  .site-showcase .site-no-gloves-when p,
+  .site-showcase .site-no-gloves-when li,
+  .site-showcase .site-no-gloves-practice-grid p,
+  .site-showcase .site-no-gloves-sources p,
+  .site-showcase .site-no-gloves-final p {
+    font-size: 15px;
+  }
+
+  .site-showcase .site-no-gloves-lead {
+    gap: 26px;
+    padding-top: 36px;
+  }
+
+  .site-showcase .site-no-gloves-myths,
+  .site-showcase .site-no-gloves-standards,
+  .site-showcase .site-no-gloves-practice {
+    padding-top: 48px;
+  }
+
+  .site-showcase .site-no-gloves-section-head h2,
+  .site-showcase .site-no-gloves-heat h2,
+  .site-showcase .site-no-gloves-when h2,
+  .site-showcase .site-no-gloves-sources h2,
+  .site-showcase .site-no-gloves-final h2 {
+    font-size: 30px;
+  }
+
+  .site-showcase .site-no-gloves-myth-list article {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 22px 0;
+  }
+
+  .site-showcase .site-no-gloves-myth-list p {
+    grid-column: auto;
+  }
+
+  .site-showcase .site-no-gloves-heat {
+    min-height: 450px;
+    margin-top: 52px;
+  }
+
+  .site-showcase .site-no-gloves-heat div {
+    width: calc(100% - 28px);
+    margin-left: auto;
+  }
+
+  .site-showcase .site-no-gloves-when,
+  .site-showcase .site-no-gloves-final {
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .site-showcase .site-no-gloves-practice-grid article {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .site-showcase .site-no-gloves-sources {
+    margin-top: 50px;
+  }
+
+  .site-showcase .site-no-gloves-actions,
+  .site-showcase .site-no-gloves-actions .site-primary-btn,
+  .site-showcase .site-no-gloves-actions .site-dark-btn {
+    width: 100%;
+  }
+}

@@ -2,6 +2,11 @@
 
 vmestevkusnee.ru {
   encode zstd gzip
+
+  request_body {
+    max_size 120MB
+  }
+
   reverse_proxy vv-delivery-app:3000
 }
 
@@ -10,21 +15,13 @@ www.vmestevkusnee.ru {
 }
 
 delivery.vmestevkusnee.ru {
-  encode zstd gzip
-
-  request_body {
-    max_size 2MB
-  }
-
-  reverse_proxy vv-delivery-app:3000
+  redir https://vmestevkusnee.ru{uri} permanent
 }
 
 partners.vmestevkusnee.ru {
-  encode zstd gzip
-  reverse_proxy vv-delivery-app:3000
+  redir https://vmestevkusnee.ru/partners{uri} permanent
 }
 
 admin.vmestevkusnee.ru {
-  encode zstd gzip
-  reverse_proxy vv-delivery-app:3000
+  redir https://vmestevkusnee.ru/admin{uri} permanent
 }

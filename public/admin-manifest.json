@@ -1,13 +1,14 @@
 {
-  "name": "Вместе Вкуснее | Админка",
-  "short_name": "ВВ Админ",
-  "description": "PWA-панель заказов «Вместе Вкуснее»",
-  "start_url": "/admin",
+  "name": "Вместе Вкуснее | Руководитель",
+  "short_name": "ВВ Руководитель",
+  "description": "Пульт руководителя «Вместе Вкуснее»",
+  "id": "/admin/manager",
+  "start_url": "/admin?role=manager",
   "scope": "/admin",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#11130f",
-  "theme_color": "#11130f",
+  "background_color": "#f3f4f6",
+  "theme_color": "#ffffff",
   "categories": ["food", "business", "productivity"],
   "icons": [
     {

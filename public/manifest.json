@@ -1,13 +1,14 @@
 {
-  "name": "Вместе Вкуснее | Доставка",
-  "short_name": "ВВ Доставка",
-  "description": "PWA-приложение доставки семейной пиццерии «Вместе Вкуснее»",
+  "name": "Вместе Вкуснее",
+  "short_name": "Вместе Вкуснее",
+  "description": "Семейная пиццерия «Вместе Вкуснее» в Чебоксарах",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fbf3e6",
-  "theme_color": "#47633f",
+  "background_color": "#f3f4f6",
+  "theme_color": "#ffffff",
   "categories": ["food", "shopping", "lifestyle"],
   "icons": [
     {
