@@ -1,4 +1,4 @@
-import { MENU_CATEGORIES } from "./menu";
+import { MENU_CATEGORIES, isPublicMenuCategory } from "./menu";
 
 export const RESTAURANT = {
   name: "Вместе Вкуснее",
@@ -64,10 +64,12 @@ export const STORIES = [
 
 export const CATEGORY_LIST = [
   { id: "featured", title: "Для вас" },
-  ...MENU_CATEGORIES.map((category) => ({
-    id: category.id,
-    title: category.shortTitle || category.title
-  }))
+  ...MENU_CATEGORIES
+    .filter((category) => isPublicMenuCategory(category.id))
+    .map((category) => ({
+      id: category.id,
+      title: category.shortTitle || category.title
+    }))
 ];
 
 export const PROMO_CODES = {

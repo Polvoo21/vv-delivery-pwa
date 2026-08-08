@@ -3,6 +3,7 @@ import { ChevronDown, ShoppingBag } from "lucide-react";
 
 import { formatPrice, getProductOldPrice } from "../../utils/price";
 import { apiPath } from "../../utils/api";
+import { isPublicMenuCategory } from "../../data/menu";
 import { SiteProductCard } from "./SiteProductCard";
 import {
   menuByCategory,
@@ -42,7 +43,7 @@ function buildCatalogView(catalog) {
   }, {});
 
   const menuGroups = categories
-    .filter((category) => category.id !== "combo")
+    .filter((category) => category.id !== "combo" && isPublicMenuCategory(category.id))
     .map((category) => ({
       ...category,
       label: category.shortTitle || category.label || category.title,

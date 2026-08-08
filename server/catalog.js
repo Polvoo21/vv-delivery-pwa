@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { pool } from "./db.js";
-import { MENU, MENU_CATEGORIES } from "../src/data/menu.js";
+import { MENU, MENU_CATEGORIES, isPublicMenuCategory } from "../src/data/menu.js";
 
 export const MAX_CATALOG_UPLOAD_BYTES = 14 * 1024 * 1024;
 export const MAX_CATALOG_VIDEO_UPLOAD_BYTES = 120 * 1024 * 1024;
@@ -569,10 +569,15 @@ async function readCatalog({ includePrivate = false } = {}) {
     pool.query(productQuery)
   ]);
 
-  const baseProducts = productResult.rows.map((row) => productRowToPublic(row, {}, { includePrivate }));
+  const publicProductRows = includePrivate
+    ? productResult.rows
+    : productResult.rows.filter((row) => isPublicMenuCategory(row.category_id));
+  const baseProducts = publicProductRows.map((row) => productRowToPublic(row, {}, { includePrivate }));
   const productById = Object.fromEntries(baseProducts.map((product) => [product.id, product]));
-  const products = productResult.rows.map((row) => productRowToPublic(row, productById, { includePrivate }));
-  const categories = categoryResult.rows.map((row) => categoryRowToPublic(row, { includePrivate }));
+  const products = publicProductRows.map((row) => productRowToPublic(row, productById, { includePrivate }));
+  const categories = categoryResult.rows
+    .map((row) => categoryRowToPublic(row, { includePrivate }))
+    .filter((category) => includePrivate || isPublicMenuCategory(category.id));
   const visibleCategoryIds = new Set(products.map((product) => product.category || product.categoryId));
 
   return {

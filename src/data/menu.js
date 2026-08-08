@@ -119,6 +119,12 @@ export const MENU_CATEGORIES = [
   }
 ];
 
+const PUBLIC_HIDDEN_MENU_CATEGORY_IDS = new Set(["breakfast-addon"]);
+
+export function isPublicMenuCategory(categoryId) {
+  return !PUBLIC_HIDDEN_MENU_CATEGORY_IDS.has(String(categoryId || ""));
+}
+
 const categoryMap = Object.fromEntries(MENU_CATEGORIES.map((category) => [category.id, category]));
 
 export const PIZZA_ADDONS = [

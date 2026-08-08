@@ -1,6 +1,6 @@
 import { Baby, CakeSlice, CalendarCheck, ChefHat, Coffee, Pizza, Salad, ShoppingBag, Users } from "lucide-react";
 import { RESTAURANT } from "../../data/config";
-import { MENU, MENU_CATEGORIES } from "../../data/menu";
+import { MENU, MENU_CATEGORIES, isPublicMenuCategory } from "../../data/menu";
 
 export const DELIVERY_URL = "/checkout";
 export const PARTNERS_URL = "/partners";
@@ -30,12 +30,14 @@ export const headerLinks = [
   { label: "Акции", href: "#menu" }
 ];
 
-export const categoryTabs = MENU_CATEGORIES.map((category) => ({
-  id: category.id,
-  label: category.shortTitle || category.title,
-  title: category.title,
-  description: category.description
-}));
+export const categoryTabs = MENU_CATEGORIES
+  .filter((category) => isPublicMenuCategory(category.id))
+  .map((category) => ({
+    id: category.id,
+    label: category.shortTitle || category.title,
+    title: category.title,
+    description: category.description
+  }));
 
 const comboCategory = {
   id: "combo",
