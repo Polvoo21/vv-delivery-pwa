@@ -47,7 +47,7 @@ import { MENU } from "../data/menu";
 const HEADER_COMPACT_ENTER_Y = 96;
 const HEADER_COMPACT_EXIT_Y = 8;
 const DEFAULT_SITE_STATS = {
-  deliveredOrdersToday: 0
+  deliveredOrdersTotal: 0
 };
 
 function hasSelectedFulfillment(fulfillment) {
@@ -252,7 +252,7 @@ export default function MainSite() {
       .then((data) => {
         if (!isCancelled) {
           setSiteStats({
-            deliveredOrdersToday: Number(data.deliveredOrdersToday || 0)
+            deliveredOrdersTotal: Number(data.deliveredOrdersTotal || 0)
           });
         }
       })
@@ -537,7 +537,7 @@ export default function MainSite() {
       />
 
       <SiteAboutSection
-        deliveredOrdersToday={siteStats.deliveredOrdersToday}
+        deliveredOrdersTotal={siteStats.deliveredOrdersTotal}
         proofAddon={
           <SiteRecentOrders
             orders={siteRecentOrders}

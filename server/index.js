@@ -33,7 +33,7 @@ import {
   updateOrderStatus
 } from "./orders.js";
 import { validateOrder } from "./order-utils.js";
-import { assertCheckoutTotalMatches, priceCheckoutOrder } from "./checkout-pricing.js";
+import { assertCheckoutTotalMatches, assertDeliveryMinimum, priceCheckoutOrder } from "./checkout-pricing.js";
 import {
   buildOAuthStartUrl,
   clearOAuthStateCookie,
@@ -165,11 +165,14 @@ import {
   syncMasterclassPayment
 } from "./masterclass.js";
 import {
-  INDIVIDUAL_MASTERCLASS_PAGE,
   INDIVIDUAL_MASTERCLASS_PATH,
   MASTERCLASSES_PATH,
   SITE_ORIGIN
 } from "../shared/masterclass-events.js";
+import {
+  getSiteSeoPage,
+  STATIC_SITE_SEO_PAGES
+} from "../shared/site-seo.js";
 import {
   notifyMaxAudit,
   notifyMaxMasterclassRegistration,
@@ -184,6 +187,11 @@ import {
   startMaxNotificationService,
   stopMaxNotificationService
 } from "./max-notifications.js";
+import {
+  canonicalRedirectMiddleware,
+  createSpaFallbackHandler
+} from "./site-routing.js";
+import { buildDefaultPageSchema, renderSeoDocument } from "./site-seo.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
@@ -628,17 +636,16 @@ app.get("/api/site/stats", async (_request, response) => {
   try {
     const result = await pool.query(
       `
-        select count(*)::int as delivered_orders_today
+        select count(*)::int as delivered_orders_total
         from orders
         where status = 'delivered'
-          and created_at >= (date_trunc('day', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow')
-          and created_at < ((date_trunc('day', now() at time zone 'Europe/Moscow') + interval '1 day') at time zone 'Europe/Moscow')
+          and coalesce(payment_provider, '') <> 'demo'
       `
     );
 
     return response.json({
       ok: true,
-      deliveredOrdersToday: Number(result.rows[0]?.delivered_orders_today || 0)
+      deliveredOrdersTotal: Number(result.rows[0]?.delivered_orders_total || 0)
     });
   } catch (error) {
     return jsonError(response, 500, "Не удалось получить статистику сайта", {
@@ -1287,6 +1294,7 @@ app.post("/api/payments/yookassa/create", async (request, response) => {
       }
       order = await withPartnerAttribution(order, promo);
     }
+    assertDeliveryMinimum(order);
     assertCheckoutTotalMatches(claimedTotal, order);
 
     let savedOrder = order.paymentId ? order : await saveOrder(order);
@@ -2460,66 +2468,36 @@ app.get("/api/partners/me", requirePartner, async (request, response) => {
   }
 });
 
+app.use(canonicalRedirectMiddleware);
 app.use(express.static(distDir, { index: false }));
 
 app.get(/^\/admin(?:\/.*)?$/, (_request, response) => {
   response.sendFile(path.join(distDir, "admin.html"));
 });
 
-async function sendSeoPage(
-  response,
-  next,
-  {
-    title,
-    description,
-    canonicalUrl,
-    imageUrl,
-    imageAlt,
-    schema
-  }
-) {
+async function sendSeoPage(response, next, page, schema = buildDefaultPageSchema(page)) {
   try {
     const indexPath = path.join(distDir, "index.html");
     const source = await readFile(indexPath, "utf8");
-    const metadata = `
-      <link rel="canonical" href="${canonicalUrl}" />
-      <meta property="og:type" content="website" />
-      <meta property="og:locale" content="ru_RU" />
-      <meta property="og:title" content="${escapeHtml(title)}" />
-      <meta property="og:description" content="${escapeHtml(description)}" />
-      <meta property="og:url" content="${canonicalUrl}" />
-      <meta property="og:image" content="${imageUrl}" />
-      <meta property="og:image:alt" content="${escapeHtml(imageAlt)}" />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="${escapeHtml(title)}" />
-      <meta name="twitter:description" content="${escapeHtml(description)}" />
-      <meta name="twitter:image" content="${imageUrl}" />
-      <script type="application/ld+json">${JSON.stringify(schema).replace(/</g, "\\u003c")}</script>
-    `;
-    const html = source
-      .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
-      .replace(
-        /<meta\s+name="description"[\s\S]*?>/i,
-        `<meta name="description" content="${escapeHtml(description)}" />`
-      )
-      .replace("</head>", `${metadata}\n  </head>`);
-
-    return response.type("html").send(html);
+    return response.type("html").send(renderSeoDocument(source, page, schema));
   } catch (error) {
     return next(error);
   }
 }
 
 app.get(
+  STATIC_SITE_SEO_PAGES.map((page) => page.path),
+  async (request, response, next) => {
+    const page = getSiteSeoPage(request.path);
+    return sendSeoPage(response, next, page);
+  }
+);
+
+app.get(
   [MASTERCLASSES_PATH, `/dev${MASTERCLASSES_PATH}`],
-  async (_request, response, next) => {
-    const title = "Кулинарные мастер-классы в Чебоксарах | Вместе Вкуснее";
-    const description =
-      "Воскресные мастер-классы по пицце для детей и взрослых в семейной пиццерии «Вместе Вкуснее» в Чебоксарах. Новые даты, запись и истории прошедших встреч.";
-    const canonicalUrl = `${SITE_ORIGIN}${MASTERCLASSES_PATH}`;
-    const imageUrl = `${SITE_ORIGIN}${MASTERCLASS_EVENT.imagePath}`;
+  async (request, response, next) => {
+    const page = getSiteSeoPage(request.path);
+    const { title, description, canonicalUrl, imageUrl } = page;
     const schema = {
       "@context": "https://schema.org",
       "@graph": [
@@ -2554,24 +2532,15 @@ app.get(
       ]
     };
 
-    return sendSeoPage(response, next, {
-      title,
-      description,
-      canonicalUrl,
-      imageUrl,
-      imageAlt: "Кулинарный мастер-класс в семейной пиццерии «Вместе Вкуснее»",
-      schema
-    });
+    return sendSeoPage(response, next, page, schema);
   }
 );
 
 app.get(
   [INDIVIDUAL_MASTERCLASS_PATH, `/dev${INDIVIDUAL_MASTERCLASS_PATH}`],
-  async (_request, response, next) => {
-    const title = INDIVIDUAL_MASTERCLASS_PAGE.seoTitle;
-    const description = INDIVIDUAL_MASTERCLASS_PAGE.seoDescription;
-    const canonicalUrl = INDIVIDUAL_MASTERCLASS_PAGE.shareUrl;
-    const imageUrl = `${SITE_ORIGIN}${INDIVIDUAL_MASTERCLASS_PAGE.imagePath}`;
+  async (request, response, next) => {
+    const page = getSiteSeoPage(request.path);
+    const { title, description, canonicalUrl, imageUrl } = page;
     const schema = {
       "@context": "https://schema.org",
       "@graph": [
@@ -2627,14 +2596,7 @@ app.get(
       ]
     };
 
-    return sendSeoPage(response, next, {
-      title,
-      description,
-      canonicalUrl,
-      imageUrl,
-      imageAlt: "Ребёнок готовит пиццу вместе с пиццайоло на празднике",
-      schema
-    });
+    return sendSeoPage(response, next, page, schema);
   }
 );
 
@@ -2645,11 +2607,9 @@ const masterclassEventPaths = [
   ...MASTERCLASS_EVENT.legacyPaths.map((eventPath) => `/dev${eventPath}`)
 ];
 
-app.get(masterclassEventPaths, async (_request, response, next) => {
-  const title = MASTERCLASS_EVENT.seoTitle;
-  const description = MASTERCLASS_EVENT.seoDescription;
-  const canonicalUrl = MASTERCLASS_EVENT.shareUrl;
-  const imageUrl = `${SITE_ORIGIN}${MASTERCLASS_EVENT.imagePath}`;
+app.get(masterclassEventPaths, async (request, response, next) => {
+  const page = getSiteSeoPage(request.path);
+  const { title, description, canonicalUrl, imageUrl } = page;
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
@@ -2710,19 +2670,10 @@ app.get(masterclassEventPaths, async (_request, response, next) => {
     ]
   };
 
-  return sendSeoPage(response, next, {
-    title,
-    description,
-    canonicalUrl,
-    imageUrl,
-    imageAlt: "Ребёнок готовит пиццу вместе с пиццайоло",
-    schema
-  });
+  return sendSeoPage(response, next, page, schema);
 });
 
-app.get(/^(?!\/api\/).*/, (_request, response) => {
-  response.sendFile(path.join(distDir, "index.html"));
-});
+app.get(/^(?!\/api\/).*/, createSpaFallbackHandler({ distDir }));
 
 async function start() {
   await initDb();

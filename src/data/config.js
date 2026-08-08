@@ -58,7 +58,7 @@ export const STORIES = [
     title: "Подарки",
     accent: "🎁",
     image: "/assets/site/dessert.webp",
-    text: "Акции, бонусы и приятные предложения для гостей."
+    text: "Акции и приятные предложения для гостей."
   }
 ];
 
@@ -72,15 +72,4 @@ export const CATEGORY_LIST = [
     }))
 ];
 
-export const PROMO_CODES = {
-  VV25: {
-    code: "VV25",
-    percent: 25,
-    label: "-25% по промокоду VV25"
-  }
-};
-
-export const OFFER_DISCOUNT = {
-  percent: 25,
-  label: "-25% на первые 3 доставки"
-};
+export const PRICING_POLICY_VERSION = 2;

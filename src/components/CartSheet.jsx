@@ -1,4 +1,5 @@
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../shared/order-rules";
 import { getUpsellProducts } from "../data/menu";
 import { calculateCartTotals, formatPrice } from "../utils/price";
 import { getProductInitials } from "../utils/productVisual";
@@ -16,7 +17,6 @@ function itemMeta(item) {
 export default function CartSheet({
   cart,
   promo,
-  offer,
   onClose,
   onQty,
   onRemove,
@@ -25,10 +25,11 @@ export default function CartSheet({
   onOpenPromo,
   onCheckout
 }) {
-  const totals = calculateCartTotals(cart, promo, offer);
+  const totals = calculateCartTotals(cart, promo);
   const upsell = getUpsellProducts();
   const swipe = useSwipeDismiss(onClose);
   const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
+  const deliveryMinimumRemaining = getDeliveryMinimumRemaining(totals.total);
 
   return (
     <div
@@ -121,7 +122,7 @@ export default function CartSheet({
 
         <button className="promo-button" type="button" onClick={onOpenPromo}>
           <span>{totals.discountState.active ? totals.discountState.label : "Введите промокод"}</span>
-          <b>{totals.discountState.active ? `-${totals.discountState.percent}%` : "VV25"}</b>
+          <b>{totals.discountState.active ? `-${totals.discountState.percent}%` : "Добавить"}</b>
         </button>
 
         <div className="total-card">
@@ -138,6 +139,15 @@ export default function CartSheet({
           <div className="total-line">
             <span>Итого</span>
             <b>{formatPrice(totals.total)} ₽</b>
+          </div>
+          <div className="delivery-minimum-note">
+            <span>Бесплатная доставка от {formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽ после скидок.</span>
+            <b>
+              {deliveryMinimumRemaining > 0
+                ? `Не хватает ${formatPrice(deliveryMinimumRemaining)} ₽`
+                : "Минимум выполнен"}
+            </b>
+            <small>Самовывоз доступен без минимальной суммы.</small>
           </div>
         </div>
 

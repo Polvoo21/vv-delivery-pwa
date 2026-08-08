@@ -1,11 +1,11 @@
 import { ChevronRight, X } from "lucide-react";
 import { useState } from "react";
-import { PROMO_CODES } from "../../data/config";
+import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../../shared/order-rules";
 import { apiPath } from "../../utils/api";
 import { formatPrice } from "../../utils/price";
 import { evaluatePromoCart } from "../../../shared/promo-rules";
 import { getCartItemDetails, getCartItemImage } from "./cartModel";
-import { EMPTY_CART_IMAGE, cartUpsellItems, getSiteHomePath } from "./siteData";
+import { EMPTY_CART_IMAGE, getSiteHomePath } from "./siteData";
 
 export function CartDrawer({
   isOpen,
@@ -36,6 +36,7 @@ export function CartDrawer({
 
   const trimmedPromoCode = promoCode.trim();
   const canApplyPromo = trimmedPromoCode.length > 0;
+  const deliveryMinimumRemaining = getDeliveryMinimumRemaining(cartSummary.total);
 
   const changePromoCode = (event) => {
     setPromoCode(event.target.value.toUpperCase());
@@ -54,29 +55,20 @@ export function CartDrawer({
     setPromoStatus(null);
 
     try {
-      let promo = null;
       const response = await fetch(`${apiPath("promoCodes")}/${encodeURIComponent(normalizedCode)}`);
       const data = await response.json().catch(() => ({}));
 
-      if (response.ok && data.ok === true && data.promo) {
-        promo = data.promo;
-      } else if (response.status === 404 && PROMO_CODES[normalizedCode]) {
-        promo = PROMO_CODES[normalizedCode];
-      } else {
-        const requestError = new Error(data.error || "Промокод не найден. Попробуйте другой");
-        requestError.allowStaticFallback = response.status === 404;
-        throw requestError;
+      if (!response.ok || data.ok !== true || !data.promo) {
+        throw new Error(data.error || "Промокод не найден. Попробуйте другой");
       }
 
       const activePromo = {
-        ...promo,
+        ...data.promo,
         active: true
       };
       const promoEvaluation = evaluatePromoCart(activePromo, cartItems);
       if (!promoEvaluation.eligible) {
-        const requestError = new Error(promoEvaluation.message);
-        requestError.allowStaticFallback = false;
-        throw requestError;
+        throw new Error(promoEvaluation.message);
       }
 
       onApplyPromo?.(activePromo);
@@ -86,31 +78,11 @@ export function CartDrawer({
         text: `Промокод применён: скидка ${activePromo.percent}%`
       });
     } catch (promoError) {
-      const fallbackPromo = PROMO_CODES[normalizedCode];
-      if (fallbackPromo && promoError.allowStaticFallback !== false) {
-        const activePromo = { ...fallbackPromo, active: true };
-        const promoEvaluation = evaluatePromoCart(activePromo, cartItems);
-        if (!promoEvaluation.eligible) {
-          onApplyPromo?.(null);
-          setPromoStatus({
-            type: "error",
-            text: promoEvaluation.message
-          });
-          return;
-        }
-        onApplyPromo?.(activePromo);
-        setPromoCode(activePromo.code);
-        setPromoStatus({
-          type: "success",
-          text: `Промокод применён: скидка ${activePromo.percent}%`
-        });
-      } else {
-        onApplyPromo?.(null);
-        setPromoStatus({
-          type: "error",
-          text: promoError.message || "Промокод не найден. Попробуйте другой"
-        });
-      }
+      onApplyPromo?.(null);
+      setPromoStatus({
+        type: "error",
+        text: promoError.message || "Промокод не найден. Попробуйте другой"
+      });
     } finally {
       setPromoLoading(false);
     }
@@ -206,19 +178,6 @@ export function CartDrawer({
                 })}
               </div>
 
-              <section className="site-cart-upsell" aria-label="Добавить к заказу">
-                <h3>Добавить к заказу?</h3>
-                <div className="site-cart-upsell-track">
-                  {cartUpsellItems.map((item) => (
-                    <a className="site-cart-upsell-card" href={`${getSiteHomePath()}#menu`} onClick={onClose} key={item.id}>
-                      <img src={getCartItemImage(item)} alt="" loading="lazy" />
-                      <span>{item.name}</span>
-                      <b>от {formatPrice(item.price)} ₽</b>
-                    </a>
-                  ))}
-                </div>
-              </section>
-
               <footer className="site-cart-summary">
                 <form className="site-cart-promo-form" onSubmit={applyPromoCode}>
                   <label className="site-cart-promo-field">
@@ -243,8 +202,6 @@ export function CartDrawer({
                 <div className="site-cart-summary-rows">
                   <span>{cartItemsLabel}</span>
                   <b>{formatPrice(cartSummary.subtotal)} ₽</b>
-                  <span>Начислим бонусы</span>
-                  <b>+{formatPrice(Math.round(cartSummary.total * 0.05))}</b>
                   {cartSummary.discount > 0 ? (
                     <>
                       <span>{cartSummary.discountState?.label || "Скидка"}</span>
@@ -257,6 +214,15 @@ export function CartDrawer({
                 <div className="site-cart-total">
                   <span>Сумма заказа</span>
                   <b>{formatPrice(cartSummary.total)} ₽</b>
+                </div>
+                <div className={`site-cart-minimum ${deliveryMinimumRemaining > 0 ? "is-pending" : "is-ready"}`}>
+                  <b>Бесплатная доставка от {formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽ после скидок</b>
+                  <span>
+                    {deliveryMinimumRemaining > 0
+                      ? `Добавьте блюда ещё на ${formatPrice(deliveryMinimumRemaining)} ₽.`
+                      : "Минимальная сумма набрана."}
+                    {" "}Самовывоз доступен без минимальной суммы.
+                  </span>
                 </div>
               </footer>
             </div>
@@ -286,7 +252,9 @@ export function CartDrawer({
             <p>
               Добавьте пиццу. Или две!
               <br />
-              А мы доставим ваш заказ от 649 ₽
+              Бесплатная доставка от {formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽
+              <br />
+              Самовывоз без минимальной суммы
             </p>
           </div>
         )}

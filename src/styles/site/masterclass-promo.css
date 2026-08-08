@@ -309,6 +309,11 @@
   color: var(--vv-orange, #ca7767);
 }
 
+.site-masterclass-promo-dialog-facts .site-masterclass-promo-places {
+  width: max-content;
+  max-width: 100%;
+}
+
 @media (max-width: 860px) {
   .site-showcase .site-masterclass-promo {
     padding: 14px 20px 24px;

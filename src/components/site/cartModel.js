@@ -1,4 +1,5 @@
 import { calculateCartTotals } from "../../utils/price";
+import { PRICING_POLICY_VERSION } from "../../data/config";
 import { DELIVERY_STORAGE_KEY, emptyCartSummary, getCategoryVisual } from "./siteData";
 
 export function getStoredCartSummary() {
@@ -9,8 +10,8 @@ export function getStoredCartSummary() {
   try {
     const parsedState = JSON.parse(window.localStorage.getItem(DELIVERY_STORAGE_KEY) || "{}");
     const cart = Array.isArray(parsedState.cart) ? parsedState.cart : [];
-    const promo = parsedState.promo || null;
-    const offer = parsedState.offer || null;
+    const promo = parsedState.pricingPolicyVersion === PRICING_POLICY_VERSION ? parsedState.promo || null : null;
+    const offer = null;
     const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
     const totals = calculateCartTotals(cart, promo, offer);
 
@@ -26,7 +27,17 @@ export function saveStoredCart(nextCart) {
 
   try {
     const parsedState = JSON.parse(window.localStorage.getItem(DELIVERY_STORAGE_KEY) || "{}");
-    window.localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify({ ...parsedState, cart: nextCart }));
+    const promo = parsedState.pricingPolicyVersion === PRICING_POLICY_VERSION ? parsedState.promo || null : null;
+    window.localStorage.setItem(
+      DELIVERY_STORAGE_KEY,
+      JSON.stringify({
+        ...parsedState,
+        pricingPolicyVersion: PRICING_POLICY_VERSION,
+        cart: nextCart,
+        promo,
+        offer: null
+      })
+    );
     return getStoredCartSummary();
   } catch (error) {
     console.warn("Не удалось сохранить корзину доставки", error);
@@ -39,7 +50,15 @@ export function saveStoredPromo(nextPromo) {
 
   try {
     const parsedState = JSON.parse(window.localStorage.getItem(DELIVERY_STORAGE_KEY) || "{}");
-    window.localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify({ ...parsedState, promo: nextPromo }));
+    window.localStorage.setItem(
+      DELIVERY_STORAGE_KEY,
+      JSON.stringify({
+        ...parsedState,
+        pricingPolicyVersion: PRICING_POLICY_VERSION,
+        promo: nextPromo,
+        offer: null
+      })
+    );
     return getStoredCartSummary();
   } catch (error) {
     console.warn("Не удалось сохранить промокод", error);

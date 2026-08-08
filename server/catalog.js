@@ -58,7 +58,6 @@ const DEFAULT_COMBO_PRODUCTS = [
     description: "Три пиццы на компанию: классика, пеперони и фирменная пицца.",
     weight: "3 пиццы",
     price: 1890,
-    oldPrice: 2190,
     badges: [],
     image: DEFAULT_PRODUCT_IMAGE,
     comboItemIds: ["signature-vv-pizza", "margarita", "pepperoni"]
@@ -70,7 +69,6 @@ const DEFAULT_COMBO_PRODUCTS = [
     description: "Две пиццы и напиток к ужину дома или самовывозу.",
     weight: "2 пиццы",
     price: 1290,
-    oldPrice: 1490,
     badges: [],
     image: DEFAULT_PRODUCT_IMAGE,
     comboItemIds: ["margarita", "pepperoni"]

@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test",
+    "test": "node --test test/*.test.js",
     "preview": "vite preview",
+    "assets:brand": "node scripts/generate-brand-assets.mjs",
     "payments:check": "node scripts/check-yookassa.mjs",
     "seed:demo": "node server/seed-demo-data.js",
     "server": "node server/index.js",

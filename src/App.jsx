@@ -20,11 +20,11 @@ import { SiteIndividualMasterclassPage } from "./components/site/SiteIndividualM
 import { SiteMasterClassPage } from "./components/site/SiteMasterClassPage";
 import { SiteMasterclassesPage } from "./components/site/SiteMasterclassesPage";
 import { SiteNoGlovesPage } from "./components/site/SiteNoGlovesPage";
+import { SiteNotFoundPage } from "./components/site/SiteNotFoundPage";
 import { SitePaymentPage } from "./components/site/SitePaymentPage";
 import { getLegalDocument } from "./components/site/legalData";
 import SplashScreen from "./components/SplashScreen";
 import Toast from "./components/Toast";
-import { OFFER_DISCOUNT } from "./data/config";
 import { calculateCartTotals, formatPrice } from "./utils/price";
 import { showLocalNotification } from "./utils/notifications";
 import {
@@ -34,6 +34,8 @@ import {
   MASTERCLASSES_PATH,
   normalizeMasterclassPath
 } from "../shared/masterclass-events";
+import { isKnownFrontendPath, isPathWithin } from "../shared/site-routes.js";
+import { getSiteSeoPage } from "../shared/site-seo.js";
 import {
   clearAppData,
   hasOpenedBefore,
@@ -42,6 +44,7 @@ import {
   markOpened,
   saveAppData
 } from "./utils/storage";
+import { syncSiteSeoHead } from "./utils/siteSeo";
 
 function cloneInitialData() {
   return JSON.parse(JSON.stringify(initialAppData));
@@ -58,8 +61,8 @@ function ClientApp() {
   const [toast, setToast] = useState("");
 
   const totals = useMemo(
-    () => calculateCartTotals(data.cart, data.promo, data.offer),
-    [data.cart, data.offer, data.promo]
+    () => calculateCartTotals(data.cart, data.promo),
+    [data.cart, data.promo]
   );
 
   useEffect(() => {
@@ -93,17 +96,6 @@ function ClientApp() {
     }));
     setScreen("home");
     showToast(fulfillment.mode === "pickup" ? "Самовывоз выбран" : "Адрес доставки сохранён");
-  }
-
-  function activateOffer() {
-    setData((current) => ({
-      ...current,
-      offer: {
-        ...OFFER_DISCOUNT,
-        active: true
-      }
-    }));
-    showToast("Скидка 25% активирована");
   }
 
   function addToCart(item) {
@@ -237,8 +229,6 @@ function ClientApp() {
           fulfillment={data.fulfillment}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
-          offer={data.offer}
-          onActivateOffer={activateOffer}
           onOpenInfo={setInfoStory}
           onOpenProduct={setActiveProduct}
           onOpenProfile={() => setActiveSheet("profile")}
@@ -264,7 +254,6 @@ function ClientApp() {
           key="cart"
           cart={data.cart}
           promo={data.promo}
-          offer={data.offer}
           onClose={() => setActiveSheet(null)}
           onQty={changeQty}
           onRemove={removeFromCart}
@@ -279,7 +268,6 @@ function ClientApp() {
         <PromoCodeSheet
           key="promo"
           promo={data.promo}
-          offer={data.offer}
           onApply={applyPromo}
           onClose={() => setActiveSheet("cart")}
         />
@@ -290,7 +278,6 @@ function ClientApp() {
           key="checkout"
           cart={data.cart}
           promo={data.promo}
-          offer={data.offer}
           fulfillment={data.fulfillment}
           customer={data.customer}
           onClose={() => setActiveSheet("cart")}
@@ -319,7 +306,8 @@ function ClientApp() {
 export default function App() {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
-  const isLegalPath = pathname.startsWith("/legal");
+  const seoPage = useMemo(() => getSiteSeoPage(pathname), [pathname]);
+  const isLegalPath = isPathWithin(pathname, "/legal");
   const legalDocument = isLegalPath ? getLegalDocument(pathname) : null;
   const isCheckoutPath = pathname === "/checkout" || pathname === "/dev/checkout";
   const isPaymentPath = pathname === "/payment" || pathname === "/dev/payment";
@@ -339,8 +327,8 @@ export default function App() {
   const isMasterclassesPath = normalizedMasterclassPath === MASTERCLASSES_PATH;
   const isMasterClassPath = Boolean(masterclassEvent);
   const isSitePath =
-    pathname.startsWith("/site") ||
-    pathname.startsWith("/dev") ||
+    isPathWithin(pathname, "/site") ||
+    isPathWithin(pathname, "/dev") ||
     isCheckoutPath ||
     isPaymentPath ||
     isCustomerOrdersPath ||
@@ -352,26 +340,45 @@ export default function App() {
     isIndividualMasterclassPath ||
     isMasterclassesPath ||
     isMasterClassPath;
-  const isAdmin = hostname.startsWith("admin.") || window.location.pathname.startsWith("/admin");
+  const isAdmin = hostname.startsWith("admin.") || isPathWithin(pathname, "/admin");
   const adminRoleHint = new URLSearchParams(window.location.search).get("role");
-  const isPartner = hostname.startsWith("partners.") || window.location.pathname.startsWith("/partners");
+  const isPartner = hostname.startsWith("partners.") || isPathWithin(pathname, "/partners");
   const isDelivery =
     !isSitePath &&
     (hostname.startsWith("delivery.") ||
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
-      pathname.startsWith("/delivery"));
+      isPathWithin(pathname, "/delivery"));
   const isSite =
     hostname === "vmestevkusnee.ru" ||
     hostname === "www.vmestevkusnee.ru" ||
     isSitePath;
+  const supportsPublicNotFound =
+    hostname === "vmestevkusnee.ru" ||
+    hostname === "www.vmestevkusnee.ru" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
+  const isNotFoundPath =
+    supportsPublicNotFound && !isAdmin && !isPartner && !isKnownFrontendPath(pathname);
 
   useEffect(() => {
     const manifest = document.querySelector('link[rel="manifest"]');
     const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
     const theme = document.querySelector('meta[name="theme-color"]');
 
-    if (isAdmin) {
+    if (isNotFoundPath) {
+      document.title = "Страница не найдена | Вместе Вкуснее";
+      let robots = document.querySelector('meta[name="robots"]');
+      if (!robots) {
+        robots = document.createElement("meta");
+        robots.setAttribute("name", "robots");
+        document.head.appendChild(robots);
+      }
+      robots.setAttribute("content", "noindex, nofollow");
+      manifest?.setAttribute("href", "/site-manifest.json");
+      appleTitle?.setAttribute("content", "Вместе Вкуснее");
+      theme?.setAttribute("content", "#f3f4f6");
+    } else if (isAdmin) {
       const isStaff = adminRoleHint === "admin";
       document.title = isStaff
         ? "Вместе Вкуснее | Администратор"
@@ -453,8 +460,13 @@ export default function App() {
       appleTitle?.setAttribute("content", "ВВ Доставка");
       theme?.setAttribute("content", "#47633f");
     }
+
+    if (seoPage && !isAdmin && !isPartner && !isDelivery && !isNotFoundPath) {
+      syncSiteSeoHead(seoPage);
+    }
   }, [
     isAdmin,
+    isNotFoundPath,
     adminRoleHint,
     isPartner,
     isDelivery,
@@ -471,11 +483,13 @@ export default function App() {
     isMasterclassesPath,
     isMasterClassPath,
     masterclassEvent,
-    legalDocument
+    legalDocument,
+    seoPage
   ]);
 
   if (isAdmin) return <AdminApp />;
   if (isPartner) return <PartnerApp />;
+  if (isNotFoundPath) return <SiteNotFoundPage />;
   if (isCheckoutPath) return <SiteCheckoutPage />;
   if (isPaymentPath) return <SitePaymentPage />;
   if (isCustomerOrdersPath) return <SiteCustomerOrdersPage />;

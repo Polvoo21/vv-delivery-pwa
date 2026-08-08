@@ -4,7 +4,6 @@ import { MENU } from "../data/menu";
 import { formatPrice } from "../utils/price";
 import { getProductInitials } from "../utils/productVisual";
 import CategoryTabs from "./CategoryTabs";
-import OfferBanner from "./OfferBanner";
 import ProductCard from "./ProductCard";
 import StoriesRow from "./StoriesRow";
 
@@ -12,8 +11,6 @@ export default function HomeScreen({
   fulfillment,
   selectedCategory,
   onSelectCategory,
-  offer,
-  onActivateOffer,
   onOpenInfo,
   onOpenProduct,
   onOpenProfile,
@@ -120,10 +117,6 @@ export default function HomeScreen({
             </button>
           </section>
 
-          <div className="delivery-mobile-offer">
-            <OfferBanner offer={offer} onActivate={onActivateOffer} />
-          </div>
-
           <section className="notice-strip" aria-label="Уведомления приложения">
             <Bell size={18} />
             <span>После заказа покажем статус и сохраним историю на этом устройстве</span>
@@ -131,8 +124,6 @@ export default function HomeScreen({
         </div>
 
         <aside className="delivery-side-panel" aria-label="Информация о заказе">
-          <OfferBanner offer={offer} onActivate={onActivateOffer} />
-
           <section className="delivery-side-card">
             <span className="side-icon">
               <Store size={20} />

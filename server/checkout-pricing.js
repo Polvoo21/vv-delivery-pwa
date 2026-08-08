@@ -1,4 +1,5 @@
 import { PIZZA_ADDONS } from "../src/data/menu.js";
+import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../shared/order-rules.js";
 import { listPublicCatalog } from "./catalog.js";
 
 const PIZZA_SIZE_DELTA = new Map([
@@ -164,4 +165,18 @@ export function assertCheckoutTotalMatches(claimedTotal, trustedOrder) {
   if (Math.round(Number(claimedTotal || 0)) !== Math.round(Number(trustedOrder?.total || 0))) {
     throw checkoutError("Итоговая сумма заказа изменилась. Обновите корзину перед оплатой.");
   }
+}
+
+export function assertDeliveryMinimum(order) {
+  if (order?.mode !== "delivery") return;
+
+  const remaining = getDeliveryMinimumRemaining(order.total);
+  if (!remaining) return;
+
+  const minimumLabel = new Intl.NumberFormat("ru-RU").format(DELIVERY_MIN_ORDER_AMOUNT);
+  const remainingLabel = new Intl.NumberFormat("ru-RU").format(remaining);
+  throw checkoutError(
+    `Минимальная сумма доставки после скидок — ${minimumLabel} ₽. Добавьте блюда ещё на ${remainingLabel} ₽.`,
+    400
+  );
 }

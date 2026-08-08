@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Percent, X } from "lucide-react";
-import { PROMO_CODES } from "../data/config";
 import { useSwipeDismiss } from "../utils/useSwipeDismiss";
 import { apiPath } from "../utils/api";
 
-export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
+export default function PromoCodeSheet({ promo, onApply, onClose }) {
   const [value, setValue] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,10 +25,10 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
     setStatus("");
 
     try {
-      const match = PROMO_CODES[normalized] || (await fetchPartnerPromo(normalized));
+      const match = await fetchPartnerPromo(normalized);
 
       if (!match) {
-        setStatus("Промокод не найден. Проверьте код или используйте VV25.");
+        setStatus("Промокод не найден. Проверьте правильность кода.");
         return;
       }
 
@@ -42,11 +41,7 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
         ...match,
         active: true
       });
-      setStatus(
-        offer?.active
-          ? "Промокод сохранён. Система учтёт его при заказе."
-          : `Промокод применён. Скидка ${match.percent}% появится в корзине.`
-      );
+      setStatus(`Промокод применён. Скидка ${match.percent}% появится в корзине.`);
     } finally {
       setLoading(false);
     }
@@ -79,12 +74,12 @@ export default function PromoCodeSheet({ promo, offer, onApply, onClose }) {
         </div>
         <div className="promo-hero">
           <Percent size={28} />
-          <span>Тестовый код</span>
-          <b>VV25</b>
+          <span>Если у вас есть промокод</span>
+          <b>Введите его ниже</b>
         </div>
         <label className="field">
           <span>Введите промокод</span>
-          <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="VV25" />
+          <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="Промокод" />
         </label>
         <button className="primary-action" type="button" onClick={applyPromo} disabled={loading}>
           {loading ? "Проверяем..." : "Применить"}

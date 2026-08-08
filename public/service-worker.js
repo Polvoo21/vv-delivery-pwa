@@ -1,4 +1,4 @@
-const CACHE_VERSION = "vv-delivery-mvp-v1.7.1";
+const CACHE_VERSION = "vv-delivery-mvp-v1.8.0";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -8,8 +8,13 @@ const APP_SHELL = [
   "/admin-manifest.json",
   "/admin-staff-manifest.json",
   "/partner-manifest.json",
+  "/favicon.ico",
+  "/favicon.svg",
+  "/icons/apple-touch-icon.png",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+  "/icons/icon-maskable-192.png",
+  "/icons/icon-maskable-512.png",
   "/icons/icon.svg",
   "/assets/pizza-main.webp"
 ];

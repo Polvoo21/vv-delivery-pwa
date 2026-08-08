@@ -245,7 +245,7 @@ export function SiteContactPhoneModal({ customer, onSaved, demoMode = false, onC
     },
     children: {
       title: "У вас есть дети?",
-      text: "Добавим семейные бонусы и поздравим ребёнка с днём рождения."
+      text: "Сохраним дату и поздравим ребёнка с днём рождения."
     },
     email: {
       title: "Подтвердите email",

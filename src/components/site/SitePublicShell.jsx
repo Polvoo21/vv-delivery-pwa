@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiPath } from "../../utils/api";
 import { CartDrawer } from "./CartDrawer";
 import { SiteAuthModal } from "./SiteAuthModal";
+import { SiteBreadcrumbs } from "./SiteBreadcrumbs";
 import { SITE_ONBOARDING_DEMO_MODE, SiteContactPhoneModal } from "./SiteContactPhoneModal";
 import { SiteHeader } from "./SiteHeader";
 import { SiteMobileCartFab } from "./SiteMobileCartFab";
@@ -11,6 +12,7 @@ import { useCartDrawer } from "./hooks/useCartDrawer";
 import { useCartSummary } from "./hooks/useCartSummary";
 import { useDeliverySettings } from "./hooks/useDeliverySettings";
 import { DELIVERY_URL } from "./siteData";
+import { getSiteSeoPage } from "../../../shared/site-seo.js";
 
 const HEADER_COMPACT_ENTER_Y = 96;
 const HEADER_COMPACT_EXIT_Y = 8;
@@ -43,6 +45,7 @@ export function SitePublicShell({ className = "", children, fallbackCustomer = n
     applyCartPromo
   } = useCartSummary();
   const { deliverySettings } = useDeliverySettings();
+  const seoPage = typeof window === "undefined" ? null : getSiteSeoPage(window.location.pathname);
   const { isCartDrawerOpen, isCartDrawerVisible, isCartDrawerClosing, openCartDrawer, closeCartDrawer } =
     useCartDrawer(syncCartSummary);
   const hasRequiredOnboarding = Boolean(siteCustomer?.requiresOnboarding || siteCustomer?.requiresContactPhoneSetup);
@@ -235,6 +238,8 @@ export function SitePublicShell({ className = "", children, fallbackCustomer = n
           onComplete={() => setIsOnboardingSessionComplete(true)}
         />
       ) : null}
+
+      {seoPage?.breadcrumbs?.length ? <SiteBreadcrumbs items={seoPage.breadcrumbs} /> : null}
 
       {typeof children === "function"
         ? children({

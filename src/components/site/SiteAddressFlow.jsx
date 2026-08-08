@@ -1,6 +1,8 @@
 import { Clock3, LocateFixed, MapPin, Navigation, Search, Store, Truck, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DELIVERY_MIN_ORDER_AMOUNT } from "../../../shared/order-rules";
 import { MAP_CONFIG } from "../../data/config";
+import { formatPrice } from "../../utils/price";
 import { loadDeliveryZones, makeDeliveryZoneLayerStyle } from "./deliveryZones";
 import { DELIVERY_STORAGE_KEY, RESTAURANT } from "./siteData";
 
@@ -149,7 +151,10 @@ export function SiteAddressPrompt({ onClose, onDelivery, onPickup, onLogin }) {
           <X size={18} />
         </button>
         <h2 id="site-address-prompt-title">Какой у вас адрес?</h2>
-        <p>Проверим, что вы в зоне доставки. Адрес сохраним для будущих заказов.</p>
+        <p>
+          Проверим зону. Бесплатная доставка от {formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽ после скидок,
+          самовывоз без минимальной суммы.
+        </p>
         <button className="site-address-primary" type="button" onClick={onDelivery}>
           <Truck size={18} />
           Указать адрес доставки

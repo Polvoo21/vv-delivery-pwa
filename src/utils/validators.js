@@ -1,3 +1,5 @@
+import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../shared/order-rules";
+
 export function validateCheckout(order) {
   const errors = {};
 
@@ -15,6 +17,11 @@ export function validateCheckout(order) {
 
   if (!Number(order.total) || Number(order.total) <= 0) {
     errors.total = "Сумма заказа должна быть больше 0";
+  }
+
+  const deliveryMinimumRemaining = getDeliveryMinimumRemaining(order.total);
+  if (order.mode === "delivery" && deliveryMinimumRemaining > 0) {
+    errors.deliveryMinimum = `Минимальная сумма доставки после скидок — ${DELIVERY_MIN_ORDER_AMOUNT.toLocaleString("ru-RU")} ₽. Добавьте блюда ещё на ${deliveryMinimumRemaining.toLocaleString("ru-RU")} ₽.`;
   }
 
   return errors;

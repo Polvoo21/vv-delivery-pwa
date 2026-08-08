@@ -1,5 +1,5 @@
 import { Clock, MapPin, Navigation, Phone } from "lucide-react";
-import { ASSET, PHONE, RESTAURANT, telHref } from "./siteData";
+import { ASSET, PHONE, RESTAURANT, SOCIAL_LINKS, telHref } from "./siteData";
 
 function getYandexMapWidgetUrl() {
   const { lat, lng } = RESTAURANT.coords;
@@ -18,18 +18,6 @@ function getYandexRouteUrl() {
   const params = new URLSearchParams({
     rtext: `~${lat},${lng}`,
     rtt: "auto"
-  });
-
-  return `https://yandex.ru/maps/?${params.toString()}`;
-}
-
-function getYandexSearchUrl() {
-  const { lat, lng } = RESTAURANT.coords;
-  const params = new URLSearchParams({
-    ll: `${lng},${lat}`,
-    mode: "search",
-    text: RESTAURANT.address,
-    z: "17"
   });
 
   return `https://yandex.ru/maps/?${params.toString()}`;
@@ -76,7 +64,7 @@ export function SiteMapSection() {
           loading="lazy"
           allowFullScreen
         />
-        <a className="site-map-brand-card" href={getYandexSearchUrl()} target="_blank" rel="noreferrer">
+        <a className="site-map-brand-card" href={SOCIAL_LINKS.yandexMaps} target="_blank" rel="noreferrer">
           <span>
             <img src={`${ASSET}vv-logo-full.svg`} alt="" />
           </span>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, CreditCard, ExternalLink, LockKeyhole, ShieldCheck } from "lucide-react";
+import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../../shared/order-rules";
 import { apiPath } from "../../utils/api";
 import { subscribeForOrderPush } from "../../utils/notifications";
 import { formatPrice } from "../../utils/price";
@@ -85,6 +86,13 @@ export function SitePaymentPage() {
   function validatePaymentReady() {
     if (!pending?.order) return "Заказ для оплаты не найден. Вернитесь к оформлению.";
     if (!Number(pending.order.total) || Number(pending.order.total) <= 0) return "Некорректная сумма заказа.";
+    const deliveryMinimumRemaining = getDeliveryMinimumRemaining(pending.order.total);
+    if (pending.order.mode === "delivery" && deliveryMinimumRemaining > 0) {
+      return (
+        `Минимальная сумма доставки после скидок — ${formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽. ` +
+        `Добавьте блюда ещё на ${formatPrice(deliveryMinimumRemaining)} ₽ или выберите самовывоз.`
+      );
+    }
     return "";
   }
 

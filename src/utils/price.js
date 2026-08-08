@@ -1,5 +1,4 @@
-import { OFFER_DISCOUNT } from "../data/config";
-import { evaluatePromoCart } from "../../shared/promo-rules";
+import { evaluatePromoCart } from "../../shared/promo-rules.js";
 
 export const formatPrice = (value) =>
   new Intl.NumberFormat("ru-RU", {
@@ -31,18 +30,11 @@ export function calculateItemPrice(product, options = {}) {
   return Math.max(0, Math.round(product.price + pizzaDelta + doughDelta + addonTotal));
 }
 
-export function getDiscountState(promo, offer, cart = []) {
+export function getDiscountState(promo, cart = []) {
   const promoPercent = promo?.active ? Number(promo.percent || 0) : 0;
-  const offerPercent = offer?.active ? Number(offer.percent || OFFER_DISCOUNT.percent) : 0;
-  const subtotal = cart.reduce(
-    (sum, item) => sum + Number(item.unitPrice || item.price || 0) * Number(item.qty || 0),
-    0
-  );
   const promoEvaluation = promo?.active ? evaluatePromoCart(promo, cart) : null;
   const promoDiscount = promoEvaluation?.eligible ? promoEvaluation.discount : 0;
-  const offerDiscount = offerPercent ? Math.round((subtotal * offerPercent) / 100) : 0;
-  const promoWins = promoDiscount >= offerDiscount && promoDiscount > 0;
-  const percent = promoWins ? promoPercent : offerDiscount > 0 ? offerPercent : 0;
+  const percent = promoDiscount > 0 ? promoPercent : 0;
 
   if (!percent) {
     return {
@@ -56,25 +48,21 @@ export function getDiscountState(promo, offer, cart = []) {
   return {
     active: true,
     percent,
-    label: promoWins ? promo.label : offer?.label || OFFER_DISCOUNT.label,
-    source: promoWins ? "promo" : "offer",
+    label: promo.label,
+    source: "promo",
     promoEvaluation
   };
 }
 
-export function calculateCartTotals(cart, promo, offer) {
+export function calculateCartTotals(cart, promo) {
   const subtotal = cart.reduce(
     (sum, item) => sum + Number(item.unitPrice || item.price || 0) * Number(item.qty || 0),
     0
   );
-  const discountState = getDiscountState(promo, offer, cart);
+  const discountState = getDiscountState(promo, cart);
   const promoDiscount =
     discountState.source === "promo" ? Number(discountState.promoEvaluation?.discount || 0) : 0;
-  const discount = discountState.active
-    ? discountState.source === "promo"
-      ? promoDiscount
-      : Math.round((subtotal * discountState.percent) / 100)
-    : 0;
+  const discount = discountState.active ? promoDiscount : 0;
   const total = Math.max(0, subtotal - discount);
 
   return {

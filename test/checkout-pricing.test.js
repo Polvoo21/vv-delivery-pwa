@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertCheckoutTotalMatches, priceCheckoutOrder } from "../server/checkout-pricing.js";
+import {
+  assertCheckoutTotalMatches,
+  assertDeliveryMinimum,
+  priceCheckoutOrder
+} from "../server/checkout-pricing.js";
 
 const catalog = {
   products: [
@@ -55,4 +59,13 @@ test("checkout pricing rejects missing products and stale totals", async () => {
     /больше недоступно/
   );
   assert.throws(() => assertCheckoutTotalMatches(1, { total: 875 }), /Итоговая сумма/);
+});
+
+test("delivery requires 1500 rubles after discounts while pickup has no minimum", () => {
+  assert.throws(
+    () => assertDeliveryMinimum({ mode: "delivery", total: 1499 }),
+    /Минимальная сумма доставки после скидок — 1\s500 ₽/
+  );
+  assert.doesNotThrow(() => assertDeliveryMinimum({ mode: "delivery", total: 1500 }));
+  assert.doesNotThrow(() => assertDeliveryMinimum({ mode: "pickup", total: 490 }));
 });

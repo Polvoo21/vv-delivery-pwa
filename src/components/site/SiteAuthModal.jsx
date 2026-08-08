@@ -570,7 +570,7 @@ export function SiteAuthModal({ customer, onClose, onAuthenticated, onLogout }) 
                   i
                 </button>
                 <h3>Пригласите друга</h3>
-                <p>Отправьте ссылку и получите бонусы на следующие заказы. Друг получит подарок.</p>
+                <p>Программа приглашений появится позже. Расскажем об условиях, когда она начнёт работать.</p>
               </section>
 
               <button className="site-auth-logout" type="button" onClick={onLogout || onClose}>

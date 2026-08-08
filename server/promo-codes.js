@@ -4,7 +4,6 @@ import { normalizePromoCode } from "./partners.js";
 import { evaluatePromoCart } from "../shared/promo-rules.js";
 
 const PROMO_TIME_ZONE = "Europe/Moscow";
-const RESERVED_PROMO_CODES = new Set(["VV25"]);
 const PROMO_RESERVATION_MINUTES = 45;
 
 const PROMO_SELECT = `
@@ -318,10 +317,6 @@ function normalizePromoInput(input, fallback = {}) {
 }
 
 async function ensurePromoCodeIsFree(code, excludeId = "") {
-  if (RESERVED_PROMO_CODES.has(code)) {
-    throw promoError("Этот промокод уже используется системной акцией", 409);
-  }
-
   const result = await pool.query(
     `
       select code

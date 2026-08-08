@@ -24,9 +24,9 @@ const aboutCards = [
   }
 ];
 
-export function SiteAboutSection({ deliveredOrdersToday = 0, proofAddon = null }) {
+export function SiteAboutSection({ deliveredOrdersTotal = 0, proofAddon = null }) {
   const formattedDeliveredOrders = new Intl.NumberFormat("ru-RU").format(
-    Math.max(0, Number(deliveredOrdersToday) || 0)
+    Math.max(0, Number(deliveredOrdersTotal) || 0)
   );
 
   return (
@@ -60,10 +60,10 @@ export function SiteAboutSection({ deliveredOrdersToday = 0, proofAddon = null }
           </a>
         </div>
         <div className="site-about-proof-row">
-          <div className="site-about-proof" aria-label="Сколько заказов доставили сегодня">
+          <div className="site-about-proof" aria-label="Сколько заказов доставили за всё время">
             <span className="site-about-proof-kicker">
               <CheckCircle2 size={17} />
-              Сегодня доставили
+              Всего доставили
             </span>
             <div className="site-about-proof-value">
               <b>{formattedDeliveredOrders}</b>

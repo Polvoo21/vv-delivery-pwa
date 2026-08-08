@@ -14,7 +14,7 @@ import {
   UserRound,
   X
 } from "lucide-react";
-import { PROMO_CODES } from "../../data/config";
+import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../../shared/order-rules";
 import { evaluatePromoCart } from "../../../shared/promo-rules";
 import { apiPath } from "../../utils/api";
 import {
@@ -124,7 +124,7 @@ function formatCheckoutSlotLabel(slot, now = new Date()) {
   return `${dateLabel}, ${timeLabel}`;
 }
 
-function OrderSummary({ cartItems, cartItemsLabel, cartSummary }) {
+function OrderSummary({ cartItems, cartItemsLabel, cartSummary, isDelivery }) {
   return (
     <aside className="site-checkout-summary" aria-label="Состав заказа">
       <h2>Состав заказа</h2>
@@ -156,10 +156,12 @@ function OrderSummary({ cartItems, cartItemsLabel, cartSummary }) {
             <b>-{formatPrice(cartSummary.discount)} ₽</b>
           </>
         ) : null}
-        <span>Начислим бонусы</span>
-        <b>+{formatPrice(Math.round(cartSummary.total * 0.05))}</b>
-        <span>Доставка</span>
-        <b>Бесплатно</b>
+        <span>{isDelivery ? "Доставка" : "Самовывоз"}</span>
+        <b>
+          {isDelivery
+            ? `Бесплатно от ${formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽`
+            : "Без минимальной суммы"}
+        </b>
       </div>
       <div className="site-checkout-summary-total">
         <span>Сумма заказа</span>
@@ -291,6 +293,9 @@ export function SiteCheckoutPage() {
       ? "Побыстрее"
       : formatCheckoutSlotLabel(selectedSlot, clockNow);
   const isDelivery = fulfillment.mode === "delivery";
+  const deliveryMinimumRemaining = isDelivery
+    ? getDeliveryMinimumRemaining(cartSummary.total)
+    : 0;
   const hasRequiredOnboarding = Boolean(customer?.requiresOnboarding || customer?.requiresContactPhoneSetup);
   const showOnboardingDemo = Boolean(
     SITE_ONBOARDING_DEMO_MODE && customer?.id && !hasRequiredOnboarding && !isOnboardingSessionComplete
@@ -411,51 +416,26 @@ export function SiteCheckoutPage() {
     setPromoStatus("Проверяем промокод...");
 
     try {
-      let promo = null;
       const response = await fetch(`${apiPath("promoCodes")}/${encodeURIComponent(code)}`);
       const data = await response.json().catch(() => ({}));
 
-      if (response.ok && data.ok === true && data.promo) {
-        promo = data.promo;
-      } else if (response.status === 404 && PROMO_CODES[code]) {
-        promo = PROMO_CODES[code];
-      } else {
-        const requestError = new Error(data.error || "Промокод не найден. Попробуйте другой.");
-        requestError.allowStaticFallback = response.status === 404;
-        throw requestError;
+      if (!response.ok || data.ok !== true || !data.promo) {
+        throw new Error(data.error || "Промокод не найден. Попробуйте другой.");
       }
 
-      const activePromo = { ...promo, active: true };
+      const activePromo = { ...data.promo, active: true };
       const promoEvaluation = evaluatePromoCart(activePromo, cartItems);
       if (!promoEvaluation.eligible) {
-        const requestError = new Error(promoEvaluation.message);
-        requestError.allowStaticFallback = false;
-        throw requestError;
+        throw new Error(promoEvaluation.message);
       }
       saveStoredPromo(activePromo);
       syncCart();
-      setPromoCode(promo.code);
-      setPromoStatus(`Промокод применён: скидка ${promo.percent}%`);
+      setPromoCode(data.promo.code);
+      setPromoStatus(`Промокод применён: скидка ${data.promo.percent}%`);
     } catch (promoError) {
-      const fallbackPromo = PROMO_CODES[code];
-      if (fallbackPromo && promoError.allowStaticFallback !== false) {
-        const activePromo = { ...fallbackPromo, active: true };
-        const promoEvaluation = evaluatePromoCart(activePromo, cartItems);
-        if (!promoEvaluation.eligible) {
-          saveStoredPromo(null);
-          syncCart();
-          setPromoStatus(promoEvaluation.message);
-          return;
-        }
-        saveStoredPromo(activePromo);
-        syncCart();
-        setPromoCode(fallbackPromo.code);
-        setPromoStatus(`Промокод применён: скидка ${fallbackPromo.percent}%`);
-      } else {
-        saveStoredPromo(null);
-        syncCart();
-        setPromoStatus(promoError.message || "Промокод не найден. Попробуйте другой.");
-      }
+      saveStoredPromo(null);
+      syncCart();
+      setPromoStatus(promoError.message || "Промокод не найден. Попробуйте другой.");
     } finally {
       setPromoLoading(false);
     }
@@ -493,6 +473,14 @@ export function SiteCheckoutPage() {
 
     if (!cartItems.length) {
       setStatus("Корзина пустая. Вернитесь в меню и добавьте блюда.");
+      return;
+    }
+
+    if (isDelivery && deliveryMinimumRemaining > 0) {
+      setStatus(
+        `Минимальная сумма доставки после скидок — ${formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽. ` +
+          `Добавьте блюда ещё на ${formatPrice(deliveryMinimumRemaining)} ₽ или выберите самовывоз.`
+      );
       return;
     }
 
@@ -702,6 +690,23 @@ export function SiteCheckoutPage() {
                       </div>
                     </div>
 
+                    {isDelivery ? (
+                      <div
+                        className={`site-checkout-minimum ${deliveryMinimumRemaining > 0 ? "is-pending" : "is-ready"}`}
+                        role="status"
+                      >
+                        <Truck size={18} />
+                        <span>
+                          <b>Минимальная сумма доставки — {formatPrice(DELIVERY_MIN_ORDER_AMOUNT)} ₽</b>
+                          <small>
+                            {deliveryMinimumRemaining > 0
+                              ? `После скидок не хватает ${formatPrice(deliveryMinimumRemaining)} ₽. Можно добавить блюда или выбрать самовывоз.`
+                              : "Условие выполнено. Доставка бесплатная."}
+                          </small>
+                        </span>
+                      </div>
+                    ) : null}
+
                     <div className="site-checkout-time-section">
                       <div className="site-checkout-subsection-head">
                         <CalendarClock size={17} />
@@ -827,9 +832,13 @@ export function SiteCheckoutPage() {
                       className="site-checkout-submit"
                       type="button"
                       onClick={submitOrder}
-                      disabled={submitting || !cartItems.length}
+                      disabled={submitting || !cartItems.length || (isDelivery && deliveryMinimumRemaining > 0)}
                     >
-                      {submitting ? "Переходим..." : `К оплате ${formatPrice(cartSummary.total)} ₽`}
+                      {submitting
+                        ? "Переходим..."
+                        : isDelivery && deliveryMinimumRemaining > 0
+                          ? `Добавьте ещё ${formatPrice(deliveryMinimumRemaining)} ₽`
+                          : `К оплате ${formatPrice(cartSummary.total)} ₽`}
                       <ChevronRight size={18} />
                     </button>
                   </div>
@@ -842,7 +851,12 @@ export function SiteCheckoutPage() {
               )}
             </section>
 
-            <OrderSummary cartItems={cartItems} cartItemsLabel={cartItemsLabel} cartSummary={cartSummary} />
+            <OrderSummary
+              cartItems={cartItems}
+              cartItemsLabel={cartItemsLabel}
+              cartSummary={cartSummary}
+              isDelivery={isDelivery}
+            />
           </div>
         )}
       </section>

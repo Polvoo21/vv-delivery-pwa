@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, CalendarDays, ChefHat, Clock3, Heart, MapPin, Users, X } from "lucide-react";
+import { ArrowRight, CalendarDays, ChefHat, Clock3, Heart, MapPin, X } from "lucide-react";
 import { MASTERCLASS_EVENT } from "../../../shared/masterclass-events";
 import { apiPath } from "../../utils/api";
 import { getSitePagePath, pluralRu } from "./siteData";
@@ -22,11 +22,6 @@ async function readApiJson(response) {
   }
 
   return data;
-}
-
-function placesLabel(value) {
-  const count = Math.max(0, Number(value || 0));
-  return `${count} ${pluralRu(count, "место", "места", "мест")}`;
 }
 
 function getUrgencyLabels() {
@@ -77,7 +72,6 @@ export function SiteMasterclassPromo({
 
   const eventPath = getSitePagePath(EVENT.path);
   const registeredParticipants = Math.max(0, Number(eventState.registeredParticipants || 0));
-  const occupiedPlaces = placesLabel(registeredParticipants);
   const participantLabel = `${registeredParticipants} ${pluralRu(
     registeredParticipants,
     "участник",
@@ -247,7 +241,9 @@ export function SiteMasterclassPromo({
 
               <div className="site-masterclass-promo-dialog-facts">
                 <span><Clock3 size={18} /> 11:00 · 900 ₽</span>
-                <span><Users size={18} /> Занято: {occupiedPlaces}</span>
+                <span className="site-masterclass-promo-places">
+                  <Heart size={18} fill="currentColor" /> Уже {participantLabel}
+                </span>
                 <span><MapPin size={18} /> Пирогова, 1Т</span>
               </div>
 

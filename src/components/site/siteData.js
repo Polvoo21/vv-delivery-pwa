@@ -1,19 +1,17 @@
 import { Baby, CakeSlice, CalendarCheck, ChefHat, Coffee, Pizza, Salad, ShoppingBag, Users } from "lucide-react";
 import { RESTAURANT } from "../../data/config";
 import { MENU, MENU_CATEGORIES, isPublicMenuCategory } from "../../data/menu";
+import { BUSINESS_PROFILES } from "../../../shared/site-profiles.js";
 
 export const DELIVERY_URL = "/checkout";
 export const PARTNERS_URL = "/partners";
 export const PHONE = RESTAURANT.phone;
-export const SOCIAL_LINKS = {
-  vk: "https://vk.com/vmeste_vkusnee21",
-  telegram: "https://t.me/vmestevkusneecheb"
-};
+export const SOCIAL_LINKS = BUSINESS_PROFILES;
 
 export const ASSET = "/assets/site/";
 export const TEST_CARD_IMAGE = `${ASSET}product-photo-placeholder.png`;
 export const NEWS_RIBBON_IMAGE = `${ASSET}news-chicken.png`;
-export const EMPTY_CART_IMAGE = "/assets/empty-cart-visual.png";
+export const EMPTY_CART_IMAGE = "/assets/empty-cart-visual-vv.png";
 export const DELIVERY_STORAGE_KEY = "vv_delivery_mvp_state";
 export const CART_DRAWER_EXIT_MS = 340;
 
@@ -214,7 +212,6 @@ export const siteComboItems = [
     description: "Три пиццы на компанию: классика, пепперони и фирменная пицца.",
     weight: "3 пиццы",
     price: 1890,
-    oldPrice: 2190,
     badges: [],
     image: TEST_CARD_IMAGE,
     comboItems: ["signature-vv-pizza", "margarita", "pepperoni"]
@@ -228,7 +225,6 @@ export const siteComboItems = [
     description: "Две пиццы и напиток к ужину дома или самовывозу.",
     weight: "2 пиццы",
     price: 1290,
-    oldPrice: 1490,
     badges: [],
     image: TEST_CARD_IMAGE,
     comboItems: ["margarita", "pepperoni"]

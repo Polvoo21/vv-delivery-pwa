@@ -12,13 +12,12 @@ const PAYMENT_OPTIONS = [
 export default function CheckoutSheet({
   cart,
   promo,
-  offer,
   fulfillment,
   customer,
   onClose,
   onSubmit
 }) {
-  const totals = useMemo(() => calculateCartTotals(cart, promo, offer), [cart, offer, promo]);
+  const totals = useMemo(() => calculateCartTotals(cart, promo), [cart, promo]);
   const swipe = useSwipeDismiss(onClose);
   const [form, setForm] = useState({
     name: customer.name || "",
@@ -88,7 +87,7 @@ export default function CheckoutSheet({
     const nextErrors = validateCheckout(order);
     setErrors(nextErrors);
     if (hasErrors(nextErrors)) {
-      setStatus("Проверьте поля оформления.");
+      setStatus(nextErrors.deliveryMinimum || "Проверьте поля оформления.");
       return;
     }
 
