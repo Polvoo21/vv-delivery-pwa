@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Baby,
   CakeSlice,
@@ -8,7 +8,7 @@ import {
   Truck,
 } from "lucide-react";
 import { CartDrawer } from "./site/CartDrawer";
-import { NewsRibbon } from "./site/NewsRibbon";
+import { SiteMasterclassPromo } from "./site/SiteMasterclassPromo";
 import { SiteAboutSection } from "./site/SiteAboutSection";
 import {
   SiteAddressModal,
@@ -80,6 +80,9 @@ export default function MainSite() {
   const [isAddressPromptOpen, setIsAddressPromptOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addressModalMode, setAddressModalMode] = useState("delivery");
+  const [isMasterclassPromoOpen, setIsMasterclassPromoOpen] = useState(false);
+  const openMasterclassPromo = useCallback(() => setIsMasterclassPromoOpen(true), []);
+  const closeMasterclassPromo = useCallback(() => setIsMasterclassPromoOpen(false), []);
   const {
     cartSummary,
     cartItems,
@@ -118,7 +121,8 @@ export default function MainSite() {
     isAddressModalOpen ||
     isAuthModalOpen ||
     needsOnboarding ||
-    isRecentOrdersOpen;
+    isRecentOrdersOpen ||
+    isMasterclassPromoOpen;
   isPageOverlayLockedRef.current = isPageOverlayLocked;
 
   const cancelAddressSelection = () => {
@@ -151,6 +155,11 @@ export default function MainSite() {
 
       if (isRecentOrdersOpen) {
         setIsRecentOrdersOpen(false);
+        return;
+      }
+
+      if (isMasterclassPromoOpen) {
+        closeMasterclassPromo();
         return;
       }
 
@@ -512,7 +521,20 @@ export default function MainSite() {
         onCartClick={openCartDrawer}
       />
 
-      <NewsRibbon />
+      <SiteMasterclassPromo
+        isDialogOpen={isMasterclassPromoOpen}
+        autoOpenAllowed={
+          !selectedProduct &&
+          !isCartDrawerOpen &&
+          !isAddressPromptOpen &&
+          !isAddressModalOpen &&
+          !isAuthModalOpen &&
+          !needsOnboarding &&
+          !isRecentOrdersOpen
+        }
+        onDialogOpen={openMasterclassPromo}
+        onDialogClose={closeMasterclassPromo}
+      />
 
       <SiteAboutSection
         deliveredOrdersToday={siteStats.deliveredOrdersToday}

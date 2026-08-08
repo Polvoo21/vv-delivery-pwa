@@ -11,7 +11,8 @@ const LOCK_SCROLL_ALLOW_SELECTOR = [
   ".site-gallery-lightbox",
   ".site-lost-contact-modal",
   ".site-lost-photo-modal",
-  ".site-recent-orders-scroll"
+  ".site-recent-orders-scroll",
+  ".site-masterclass-promo-dialog"
 ].join(", ");
 
 function getElementTarget(target) {
