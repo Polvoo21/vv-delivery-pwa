@@ -316,6 +316,8 @@ const STATIC_SEO_PAGES = new Map(
 
 function getMasterclassSeoPage(pathname) {
   if (pathname === MASTERCLASSES_PATH) {
+    const nextEvent = getNextMasterclassEvent();
+
     return finalizePage({
       path: MASTERCLASSES_PATH,
       title: "Куда сходить с ребёнком в Чебоксарах | Вместе Вкуснее",
@@ -346,6 +348,12 @@ function getMasterclassSeoPage(pathname) {
       ],
       breadcrumbs: [HOME_CRUMB, MASTERCLASSES_CRUMB],
       links: [
+        ...(nextEvent
+          ? [{
+              label: `Ближайший мастер-класс ${nextEvent.shortDateLabel}`,
+              href: nextEvent.path
+            }]
+          : []),
         { label: "Индивидуальный мастер-класс", href: INDIVIDUAL_MASTERCLASS_PATH },
         { label: "Фотографии пиццерии", href: "/gallery" },
         { label: "Контакты", href: "/#contacts" }

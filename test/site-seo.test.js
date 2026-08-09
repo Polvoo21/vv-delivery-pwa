@@ -113,6 +113,15 @@ test("answer-ready service pages expose direct facts in server HTML", () => {
   }
 });
 
+test("masterclass listing links the current event in server HTML", () => {
+  const page = getSiteSeoPage("/master-klassy");
+  const currentPath = "/master-klassy/pizza-vetchina-griby-16-avgusta-2026";
+  const html = renderSeoDocument(INDEX_FIXTURE, page);
+
+  assert.ok(page.links.some((link) => link.href === currentPath));
+  assert.match(html, new RegExp(`href="${currentPath}"`));
+});
+
 test("homepage server HTML can render current menu prices from the production catalog", () => {
   const html = renderSeoDocument(
     INDEX_FIXTURE,
