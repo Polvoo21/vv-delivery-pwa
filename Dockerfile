@@ -20,6 +20,7 @@ RUN update-ca-certificates
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/dist-ssr ./dist-ssr
 COPY --from=build /app/src/data ./src/data
 COPY server ./server
 COPY shared ./shared

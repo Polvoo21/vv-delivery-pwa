@@ -1,3 +1,4 @@
+import "../../styles/site/masterclasses.css";
 import { useEffect } from "react";
 import {
   ArrowLeft,
@@ -20,9 +21,9 @@ import { SiteFooter } from "./SiteFooter";
 import { SitePublicShell } from "./SitePublicShell";
 import { getSiteHomePath, getSitePagePath } from "./siteData";
 
-const PAGE_TITLE = "Кулинарные мастер-классы в Чебоксарах | Вместе Вкуснее";
+const PAGE_TITLE = "Куда сходить с ребёнком в Чебоксарах | Вместе Вкуснее";
 const PAGE_DESCRIPTION =
-  "Воскресные мастер-классы по пицце для детей и взрослых в семейной пиццерии «Вместе Вкуснее» в Чебоксарах. Новые даты, запись и истории прошедших встреч.";
+  "Кулинарные мастер-классы для детей и взрослых в Чебоксарах. Готовим пиццу с пиццайоло: актуальные даты, стоимость и онлайн-запись.";
 const PAGE_URL = `${SITE_ORIGIN}${MASTERCLASSES_PATH}`;
 
 function formatPrice(value) {
@@ -88,10 +89,10 @@ function EventCard({ event, archived = false }) {
 export function SiteMasterclassesPage() {
   const registrationEvents = MASTERCLASS_EVENTS.filter(
     (event) => event.pageMode === "registration"
-  );
+  ).sort((left, right) => new Date(left.startsAt) - new Date(right.startsAt));
   const archiveEvents = MASTERCLASS_EVENTS.filter(
     (event) => event.pageMode === "archive"
-  );
+  ).sort((left, right) => new Date(right.startsAt) - new Date(left.startsAt));
   const nextEvent = registrationEvents[0] || null;
 
   useEffect(() => {
@@ -135,12 +136,12 @@ export function SiteMasterclassesPage() {
           </a>
           <p className="site-eyebrow">Воскресные мастер-классы</p>
           <h1 id="site-masterclasses-title">
-            Воскресенья, после которых хочется готовить ещё
+            Кулинарные мастер-классы для детей и взрослых в Чебоксарах
           </h1>
           <p>
-            Кулинарные мастер-классы для детей и взрослых в Чебоксарах.
-            Готовим на настоящей кухне «Вместе Вкуснее», учимся у пиццайоло,
-            смеёмся над мукой на носу и уходим со своей горячей пиццей.
+            Если ищете, чем заняться в Чебоксарах или куда сходить с ребёнком,
+            приходите готовить на настоящей кухне «Вместе Вкуснее». Учимся у
+            пиццайоло и уходим со своей горячей пиццей.
           </p>
           {nextEvent ? (
             <a className="site-masterclasses-primary" href={getSitePagePath(nextEvent.path)}>

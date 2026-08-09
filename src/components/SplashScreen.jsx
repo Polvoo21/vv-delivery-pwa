@@ -1,3 +1,6 @@
+import "../styles.css";
+import "../final-polish.css";
+
 export default function SplashScreen() {
   return (
     <section className="splash-screen" aria-label="Загрузка приложения">

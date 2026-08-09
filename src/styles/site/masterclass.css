@@ -191,6 +191,21 @@
   transform: translateY(-1px);
 }
 
+.site-showcase .site-masterclass-primary.is-disabled,
+.site-showcase .site-masterclass-primary.is-disabled:hover {
+  border-color: #d7dbe0;
+  color: #757d87;
+  background: #eef0f2;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.site-showcase .site-masterclass-secondary.is-next {
+  border-color: rgba(202, 119, 103, 0.42);
+  color: #9c493c;
+  background: #fff6f4;
+}
+
 .site-showcase .site-masterclass-secondary {
   border: 1px solid var(--masterclass-border);
   color: var(--masterclass-text);
@@ -258,6 +273,41 @@
   font-size: 12px;
   font-weight: 650;
   line-height: 1.4;
+}
+
+.site-showcase .site-masterclass-cancelled-notice {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid rgba(202, 119, 103, 0.34);
+  border-radius: 14px;
+  color: var(--masterclass-text);
+  background: #fff6f4;
+}
+
+.site-showcase .site-masterclass-cancelled-notice > svg {
+  color: var(--vv-orange);
+}
+
+.site-showcase .site-masterclass-cancelled-notice > div {
+  display: grid;
+  gap: 4px;
+}
+
+.site-showcase .site-masterclass-cancelled-notice strong {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.site-showcase .site-masterclass-cancelled-notice span {
+  color: var(--masterclass-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .site-showcase .site-masterclass-event-card {
@@ -1027,10 +1077,149 @@
 .site-showcase .site-masterclass-counter,
 .site-showcase .site-masterclass-form,
 .site-showcase .site-masterclass-payment,
-.site-showcase .site-masterclass-success {
+.site-showcase .site-masterclass-success,
+.site-showcase .site-masterclass-cancelled-card {
   border: 1px solid var(--masterclass-border);
   border-radius: 16px;
   background: #fff;
+}
+
+.site-showcase .site-masterclass-cancelled-card {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+}
+
+.site-showcase .site-masterclass-cancelled-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  color: var(--vv-orange);
+  background: #fff0ed;
+}
+
+.site-showcase .site-masterclass-cancelled-card h2,
+.site-showcase .site-masterclass-cancelled-card p {
+  margin: 0;
+}
+
+.site-showcase .site-masterclass-cancelled-card h2 {
+  color: var(--masterclass-text);
+  font-size: 25px;
+  font-weight: 950;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.site-showcase .site-masterclass-cancelled-card > p:not(.site-eyebrow) {
+  color: var(--masterclass-muted);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.site-showcase .site-masterclass-next-event {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--vv-orange);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.site-showcase .site-masterclass-next-event:hover {
+  background: var(--vv-orange-hover);
+  transform: translateY(-1px);
+}
+
+.site-showcase .site-masterclass-next-event > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.site-showcase .site-masterclass-next-event small {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.site-showcase .site-masterclass-next-event strong {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.site-showcase .site-masterclass-cancelled-card > small {
+  color: var(--masterclass-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.site-showcase .site-masterclass-archive-summary {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-height: 100%;
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid var(--masterclass-border);
+  border-radius: 18px;
+  background: var(--masterclass-soft);
+}
+
+.site-showcase .site-masterclass-archive-summary h2,
+.site-showcase .site-masterclass-archive-summary p {
+  margin: 0;
+}
+
+.site-showcase .site-masterclass-archive-summary h2 {
+  max-width: 620px;
+  color: var(--masterclass-text);
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 950;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.site-showcase .site-masterclass-archive-summary > p:not(.site-eyebrow) {
+  max-width: 680px;
+  color: var(--masterclass-muted);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.site-showcase .site-masterclass-archive-summary > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: max-content;
+  min-height: 50px;
+  padding: 0 20px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--vv-orange);
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.site-showcase .site-masterclass-archive-summary > a:hover {
+  background: var(--vv-orange-hover);
+  transform: translateY(-1px);
 }
 
 .site-showcase .site-masterclass-counter {

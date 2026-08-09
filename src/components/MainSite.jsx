@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   Baby,
   CakeSlice,
@@ -6,49 +6,104 @@ import {
   ChefHat,
   HeartHandshake,
   Truck,
+  Users,
 } from "lucide-react";
-import { CartDrawer } from "./site/CartDrawer";
 import { SiteMasterclassPromo } from "./site/SiteMasterclassPromo";
 import { SiteAboutSection } from "./site/SiteAboutSection";
-import {
-  SiteAddressModal,
-  SiteAddressPrompt,
-  readSiteFulfillment,
-  saveSiteFulfillment
-} from "./site/SiteAddressFlow";
-import { SiteFooter } from "./site/SiteFooter";
-import { SiteFaqSection } from "./site/SiteFaqSection";
-import { SiteGallerySection } from "./site/SiteGallerySection";
-import { SiteAuthModal } from "./site/SiteAuthModal";
-import { SITE_ONBOARDING_DEMO_MODE, SiteContactPhoneModal } from "./site/SiteContactPhoneModal";
+import { readSiteFulfillment, saveSiteFulfillment } from "./site/siteFulfillment";
 import { SiteHeader } from "./site/SiteHeader";
-import { SiteMapSection } from "./site/SiteMapSection";
-import { SiteMenuSection } from "./site/SiteMenuSection";
 import { SiteMobileCartFab } from "./site/SiteMobileCartFab";
-import { SiteProductModal } from "./site/SiteProductModal";
 import { SiteRecentOrders } from "./site/SiteRecentOrders";
-import { SiteSeoSection } from "./site/SiteSeoSection";
 import {
   ASSET,
   DELIVERY_URL,
   RESTAURANT,
-  eventCards,
   getSiteOrderPath,
-  siteComboItems
-} from "./site/siteData";
+} from "./site/siteCoreData";
 import { fetchCurrentSiteCustomer, forgetSiteCustomer, rememberSiteCustomer } from "./site/customerSession";
 import { useBodyScrollLock } from "./site/hooks/useBodyScrollLock";
 import { useCartDrawer } from "./site/hooks/useCartDrawer";
 import { useCartSummary } from "./site/hooks/useCartSummary";
 import { useDeliverySettings } from "./site/hooks/useDeliverySettings";
 import { apiPath } from "../utils/api";
-import { MENU } from "../data/menu";
+import { METRIKA_GOALS, reachMetrikaGoal } from "../utils/analytics";
+
+const SITE_ONBOARDING_DEMO_MODE = false;
+
+function lazyNamed(loader, exportName) {
+  return lazy(() => loader().then((module) => ({ default: module[exportName] })));
+}
+
+const CartDrawer = lazyNamed(() => import("./site/CartDrawer"), "CartDrawer");
+const SiteAuthModal = lazyNamed(() => import("./site/SiteAuthModal"), "SiteAuthModal");
+const SiteContactPhoneModal = lazyNamed(
+  () => import("./site/SiteContactPhoneModal"),
+  "SiteContactPhoneModal"
+);
+const SiteProductModal = lazyNamed(() => import("./site/SiteProductModal"), "SiteProductModal");
+const SiteMenuSection = lazyNamed(() => import("./site/SiteMenuSection"), "SiteMenuSection");
+const SiteAddressModal = lazyNamed(() => import("./site/SiteAddressFlow"), "SiteAddressModal");
+const SiteAddressPrompt = lazyNamed(() => import("./site/SiteAddressFlow"), "SiteAddressPrompt");
+const HomepageBelowFold = lazyNamed(
+  () => import("./site/HomepageBelowFold"),
+  "HomepageBelowFold"
+);
+
+function DeferredMount({ anchorId, aliases = [], minHeight = 720, children }) {
+  const nodeRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (isReady) return undefined;
+
+    const node = nodeRef.current;
+    const timeout = window.setTimeout(() => setIsReady(true), 6000);
+    if (!("IntersectionObserver" in window)) {
+      return () => window.clearTimeout(timeout);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setIsReady(true);
+      },
+      { rootMargin: "240px 0px" }
+    );
+
+    if (node) observer.observe(node);
+
+    return () => {
+      window.clearTimeout(timeout);
+      observer.disconnect();
+    };
+  }, [isReady]);
+
+  return (
+    <div
+      ref={nodeRef}
+      id={isReady ? undefined : anchorId}
+      className="site-deferred-mount"
+      style={{ minHeight }}
+      aria-busy={!isReady}
+    >
+      {!isReady
+        ? aliases.map((alias) => <span className="site-deferred-anchor" id={alias} key={alias} aria-hidden="true" />)
+        : null}
+      {isReady ? children : <span className="site-visually-hidden">Загружаем меню…</span>}
+    </div>
+  );
+}
 
 const HEADER_COMPACT_ENTER_Y = 96;
 const HEADER_COMPACT_EXIT_Y = 8;
 const DEFAULT_SITE_STATS = {
   deliveredOrdersTotal: 0
 };
+const eventCards = [
+  { icon: CakeSlice, title: "Детские праздники", text: "Пицца, десерты, спокойный зал и детская зона за стеклом." },
+  { icon: Users, title: "Семейные встречи", text: "Большие столы, понятное меню и формат, где удобно с детьми." },
+  { icon: CalendarCheck, title: "Банкетный зал", text: "Поможем собрать меню под день рождения, выпускной или небольшой праздник." }
+];
 
 function hasSelectedFulfillment(fulfillment) {
   return fulfillment?.mode === "pickup" || Boolean(fulfillment?.address);
@@ -70,6 +125,7 @@ export default function MainSite() {
   const [isOnboardingSessionComplete, setIsOnboardingSessionComplete] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isRecentOrdersOpen, setIsRecentOrdersOpen] = useState(false);
+  const [isMasterclassPromoOpen, setIsMasterclassPromoOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [siteStats, setSiteStats] = useState(DEFAULT_SITE_STATS);
   const [siteRecentOrders, setSiteRecentOrders] = useState([]);
@@ -80,9 +136,6 @@ export default function MainSite() {
   const [isAddressPromptOpen, setIsAddressPromptOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addressModalMode, setAddressModalMode] = useState("delivery");
-  const [isMasterclassPromoOpen, setIsMasterclassPromoOpen] = useState(false);
-  const openMasterclassPromo = useCallback(() => setIsMasterclassPromoOpen(true), []);
-  const closeMasterclassPromo = useCallback(() => setIsMasterclassPromoOpen(false), []);
   const {
     cartSummary,
     cartItems,
@@ -101,7 +154,7 @@ export default function MainSite() {
     useCartDrawer(syncCartSummary);
 
   const editableProductById = useMemo(
-    () => new Map([...MENU, ...siteComboItems].filter((product) => product?.id).map((product) => [product.id, product])),
+    () => new Map(),
     []
   );
 
@@ -159,7 +212,7 @@ export default function MainSite() {
       }
 
       if (isMasterclassPromoOpen) {
-        closeMasterclassPromo();
+        setIsMasterclassPromoOpen(false);
         return;
       }
 
@@ -347,6 +400,12 @@ export default function MainSite() {
     setPendingCartItem(null);
     closeProductModal();
     openCartDrawer();
+    reachMetrikaGoal(METRIKA_GOALS.ADD_TO_CART, {
+      product_id: cartItem.productId || cartItem.id || "",
+      product_name: cartItem.name || "",
+      price: Number(cartItem.unitPrice || cartItem.price || 0),
+      quantity: Number(cartItem.qty || 1)
+    });
   };
 
   const addProductToCart = (cartItem) => {
@@ -497,21 +556,25 @@ export default function MainSite() {
         onCartClick={openCartDrawer}
       />
 
-      <CartDrawer
-        isOpen={isCartDrawerOpen}
-        isVisible={isCartDrawerVisible}
-        isClosing={isCartDrawerClosing}
-        hasItems={hasCartItems}
-        cartItems={cartItems}
-        cartItemsLabel={cartItemsLabel}
-        cartSummary={cartSummary}
-        onClose={closeCartDrawer}
-        onRemoveItem={removeCartItem}
-        onUpdateItemQty={updateCartItemQty}
-        onEditItem={editCartItem}
-        onApplyPromo={applyCartPromo}
-        onCheckout={requestCheckout}
-      />
+      <Suspense fallback={null}>
+        {isCartDrawerVisible ? (
+          <CartDrawer
+            isOpen={isCartDrawerOpen}
+            isVisible={isCartDrawerVisible}
+            isClosing={isCartDrawerClosing}
+            hasItems={hasCartItems}
+            cartItems={cartItems}
+            cartItemsLabel={cartItemsLabel}
+            cartSummary={cartSummary}
+            onClose={closeCartDrawer}
+            onRemoveItem={removeCartItem}
+            onUpdateItemQty={updateCartItemQty}
+            onEditItem={editCartItem}
+            onApplyPromo={applyCartPromo}
+            onCheckout={requestCheckout}
+          />
+        ) : null}
+      </Suspense>
 
       <SiteMobileCartFab
         hasCartItems={hasCartItems}
@@ -519,21 +582,6 @@ export default function MainSite() {
         isCartDrawerOpen={isCartDrawerOpen}
         isCartDrawerClosing={isCartDrawerClosing}
         onCartClick={openCartDrawer}
-      />
-
-      <SiteMasterclassPromo
-        isDialogOpen={isMasterclassPromoOpen}
-        autoOpenAllowed={
-          !selectedProduct &&
-          !isCartDrawerOpen &&
-          !isAddressPromptOpen &&
-          !isAddressModalOpen &&
-          !isAuthModalOpen &&
-          !needsOnboarding &&
-          !isRecentOrdersOpen
-        }
-        onDialogOpen={openMasterclassPromo}
-        onDialogClose={closeMasterclassPromo}
       />
 
       <SiteAboutSection
@@ -549,14 +597,27 @@ export default function MainSite() {
         }
       />
 
-      <SiteMenuSection onProductOpen={setSelectedProduct} />
-
-      <SiteProductModal
-        product={selectedProduct}
-        customer={siteCustomer}
-        onClose={closeProductModal}
-        onAddToCart={addProductToCart}
+      <SiteMasterclassPromo
+        isDialogOpen={isMasterclassPromoOpen}
+        onOpen={() => setIsMasterclassPromoOpen(true)}
+        onClose={() => setIsMasterclassPromoOpen(false)}
       />
+
+      <DeferredMount anchorId="menu" aliases={["summer"]} minHeight={900}>
+        <Suspense fallback={null}>
+          <SiteMenuSection onProductOpen={setSelectedProduct} />
+        </Suspense>
+      </DeferredMount>
+
+      <Suspense fallback={null}>
+        {selectedProduct ? (
+          <SiteProductModal
+            product={selectedProduct}
+            customer={siteCustomer}
+            onClose={closeProductModal}
+            onAddToCart={addProductToCart}
+          />
+        ) : null}
 
       {isAddressPromptOpen ? (
         <SiteAddressPrompt
@@ -603,6 +664,7 @@ export default function MainSite() {
           onComplete={() => setIsOnboardingSessionComplete(true)}
         />
       ) : null}
+      </Suspense>
 
       <section className="site-section-v2 site-family-feature" id="kids">
         <div className="site-family-photo site-family-photo-stack">
@@ -673,15 +735,11 @@ export default function MainSite() {
         </div>
       </section>
 
-      <SiteGallerySection />
-
-      <SiteFaqSection />
-
-      <SiteMapSection />
-
-      <SiteSeoSection />
-
-      <SiteFooter />
+      <DeferredMount minHeight={1200}>
+        <Suspense fallback={null}>
+          <HomepageBelowFold />
+        </Suspense>
+      </DeferredMount>
 
     </main>
   );

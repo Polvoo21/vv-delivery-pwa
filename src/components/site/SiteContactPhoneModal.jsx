@@ -1,3 +1,4 @@
+import "../../styles/site/auth-modal.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Baby, CalendarDays, Check, ChevronLeft, Mail, Phone } from "lucide-react";
 import { apiPath } from "../../utils/api";

@@ -1,8 +1,8 @@
+import "../../styles/site/no-gloves.css";
 import { useEffect } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
-  ChefHat,
   ExternalLink,
   Flame,
   Hand,
@@ -72,27 +72,14 @@ const gloveCases = [
   "отдельные требования санитарных правил или проверяющего органа для конкретного процесса"
 ];
 
-const practiceNotes = [
-  {
-    title: "В мире уже спорили про обязательные перчатки",
-    text:
-      "В Калифорнии вводили жесткое правило для поваров и барменов, но затем его отменили: оно замедляло работу и создавало ложное ощущение чистоты."
-  },
-  {
-    title: "Высокая кухня тоже работает руками",
-    text:
-      "Известные шефы часто работают без перчаток, потому что точная ручная работа с тестом, соусом, пастой и мясом требует чувствительности и контроля."
-  }
-];
-
 const sourceLinks = [
   {
-    label: "Санитарные правила для общепита",
-    href: "https://docs.cntd.ru/document/566276706/titles/7DM0KA"
+    label: "СанПиН 2.3/2.4.3590-20 — официальный текст",
+    href: "https://publication.pravo.gov.ru/document/view/0001202011120001"
   },
   {
-    label: "Разъяснение Роспотребнадзора",
-    href: "https://cgon.rospotrebnadzor.ru/biznesu/articles/salat-i-ruki-povara/"
+    label: "Роспотребнадзор — требования к предприятиям общепита",
+    href: "https://zpp.rospotrebnadzor.ru/news/federal/574818"
   }
 ];
 
@@ -113,7 +100,27 @@ export function SiteNoGlovesPage() {
   return (
     <SitePublicShell className="site-no-gloves-page">
       <section className="site-no-gloves-hero" aria-labelledby="site-no-gloves-title">
-        <img src={`${ASSET}concept-pizza-oven.jpg`} alt="" aria-hidden="true" />
+        <picture aria-hidden="true">
+          <source
+            type="image/avif"
+            srcSet={`${ASSET}no-gloves-hero-640.avif 640w, ${ASSET}no-gloves-hero-1280.avif 1280w`}
+            sizes="100vw"
+          />
+          <source
+            type="image/webp"
+            srcSet={`${ASSET}no-gloves-hero-640.webp 640w, ${ASSET}no-gloves-hero-1280.webp 1280w`}
+            sizes="100vw"
+          />
+          <img
+            src={`${ASSET}no-gloves-hero-1280.webp`}
+            alt=""
+            width="1280"
+            height="854"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
+        </picture>
         <div className="site-no-gloves-hero-inner">
           <a className="site-no-gloves-back" href={getSiteHomePath()} onClick={returnToSite}>
             <ArrowLeft size={18} />
@@ -162,14 +169,22 @@ export function SiteNoGlovesPage() {
       </section>
 
       <section className="site-no-gloves-heat" aria-labelledby="site-no-gloves-heat-title">
-        <img src={`${ASSET}concept-oven.webp`} alt="" aria-hidden="true" loading="lazy" />
+        <img
+          src={`${ASSET}concept-oven.webp`}
+          alt=""
+          aria-hidden="true"
+          width="1280"
+          height="854"
+          loading="lazy"
+          decoding="async"
+        />
         <div>
           <Flame size={28} />
           <h2 id="site-no-gloves-heat-title">Пицца проходит печь примерно при 265 °C</h2>
           <p>
             Мы работаем с тестом и начинкой до выпекания, а затем пицца отправляется в горячую печь.
-            Поэтому для пиццы главный стандарт - не “перчатки всегда”, а чистые руки, чистый инвентарь
-            и высокая температура приготовления.
+            Температура выпекания — часть технологического процесса, но она не отменяет требования
+            к гигиене рук, чистоте инвентаря и безопасной работе с продуктами на каждом этапе.
           </p>
         </div>
       </section>
@@ -213,35 +228,15 @@ export function SiteNoGlovesPage() {
         </ul>
       </section>
 
-      <section className="site-no-gloves-practice" aria-labelledby="site-no-gloves-practice-title">
-        <div className="site-no-gloves-section-head">
-          <span className="site-eyebrow">Практика кухни</span>
-          <h2 id="site-no-gloves-practice-title">Без перчаток готовят не только у нас</h2>
-          <p>
-            Важно смотреть не на один внешний признак, а на культуру кухни целиком:
-            чистоту, обучение, контроль и технологию приготовления.
-          </p>
-        </div>
-
-        <div className="site-no-gloves-practice-grid">
-          {practiceNotes.map((item) => (
-            <article key={item.title}>
-              <ChefHat size={22} />
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section className="site-no-gloves-sources" aria-labelledby="site-no-gloves-sources-title">
         <div>
           <Sparkles size={24} />
           <h2 id="site-no-gloves-sources-title">На что можно посмотреть самому</h2>
           <p>
-            Мы опираемся на санитарные требования к общепиту и здравый смысл кухни:
-            горячее блюдо проходит термообработку, а готовые холодные позиции требуют отдельного подхода.
+            Мы опираемся на действующие санитарные требования к общественному питанию.
+            Для готовых холодных блюд, порционирования и сервировки правила отдельно требуют перчатки.
           </p>
+          <p><time dateTime="2026-08-08">Источники проверены 8 августа 2026 года.</time></p>
         </div>
         <div className="site-no-gloves-source-links">
           {sourceLinks.map((link) => (

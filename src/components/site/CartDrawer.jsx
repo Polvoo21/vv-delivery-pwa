@@ -1,3 +1,4 @@
+import "../../styles/site/cart-drawer.css";
 import { ChevronRight, X } from "lucide-react";
 import { useState } from "react";
 import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../../shared/order-rules";

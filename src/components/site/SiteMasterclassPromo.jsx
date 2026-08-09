@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, CalendarDays, ChefHat, Clock3, Heart, MapPin, X } from "lucide-react";
-import { MASTERCLASS_EVENT } from "../../../shared/masterclass-events";
+import { ArrowRight, CalendarDays, ChefHat, Clock, Heart, MapPin, X } from "lucide-react";
+import {
+  getActiveMasterclassEvent,
+  MASTERCLASS_EVENT
+} from "../../../shared/masterclass-events";
 import { apiPath } from "../../utils/api";
-import { getSitePagePath, pluralRu } from "./siteData";
+import { getSitePagePath, pluralRu } from "./siteCoreData";
 
-const EVENT = MASTERCLASS_EVENT;
-const PROMO_SEEN_KEY = `vv_masterclass_promo_seen:${EVENT.id}:v2`;
-const AUTO_OPEN_DELAY_MS = 1400;
+const EVENT = getActiveMasterclassEvent() || MASTERCLASS_EVENT;
+const PROMO_SEEN_KEY = `vv_masterclass_promo_seen:${EVENT.id}:v1`;
+const AUTO_OPEN_DELAY_MS = 1200;
 const MOSCOW_DATE_FORMATTER = new Intl.DateTimeFormat("ru-RU", {
   timeZone: "Europe/Moscow",
   year: "numeric",
@@ -41,30 +44,9 @@ function getUrgencyLabels() {
   return { date: EVENT.shortDateLabel, kicker: "Скоро" };
 }
 
-function hasSeenPromo() {
-  try {
-    return window.localStorage.getItem(PROMO_SEEN_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function rememberPromoSeen() {
-  try {
-    window.localStorage.setItem(PROMO_SEEN_KEY, "1");
-  } catch {
-    // В приватном режиме localStorage может быть недоступен. Показ всё равно не блокируем.
-  }
-}
-
-export function SiteMasterclassPromo({
-  isDialogOpen,
-  autoOpenAllowed,
-  onDialogOpen,
-  onDialogClose
-}) {
+export function SiteMasterclassPromo({ isDialogOpen = false, onOpen, onClose }) {
   const dialogRef = useRef(null);
-  const previousFocusRef = useRef(null);
+  const hasAutoOpenedRef = useRef(false);
   const [eventState, setEventState] = useState({
     registeredParticipants: 0,
     registrationOpen: EVENT.pageMode === "registration"
@@ -101,37 +83,52 @@ export function SiteMasterclassPromo({
   }, [loadEvent]);
 
   useEffect(() => {
-    if (!autoOpenAllowed || isDialogOpen || !registrationOpen || hasSeenPromo()) {
-      return undefined;
+    if (!registrationOpen || hasAutoOpenedRef.current) return undefined;
+
+    try {
+      if (window.localStorage.getItem(PROMO_SEEN_KEY) === "1") {
+        hasAutoOpenedRef.current = true;
+        return undefined;
+      }
+    } catch {
+      // Недоступный localStorage не мешает показать актуальное приглашение.
     }
 
-    const timer = window.setTimeout(() => {
-      if (hasSeenPromo()) return;
-      rememberPromoSeen();
-      onDialogOpen();
+    const timeout = window.setTimeout(() => {
+      hasAutoOpenedRef.current = true;
+      onOpen?.();
     }, AUTO_OPEN_DELAY_MS);
 
-    return () => window.clearTimeout(timer);
-  }, [autoOpenAllowed, isDialogOpen, onDialogOpen, registrationOpen]);
+    return () => window.clearTimeout(timeout);
+  }, [onOpen, registrationOpen]);
+
+  useEffect(() => {
+    if (!isDialogOpen) return;
+
+    try {
+      window.localStorage.setItem(PROMO_SEEN_KEY, "1");
+    } catch {
+      // Попап остаётся рабочим, даже если браузер запретил хранилище.
+    }
+  }, [isDialogOpen]);
 
   useEffect(() => {
     if (!isDialogOpen) return undefined;
 
-    previousFocusRef.current = document.activeElement;
-    const frame = window.requestAnimationFrame(() => {
-      dialogRef.current?.querySelector("button, a")?.focus();
-    });
+    const dialog = dialogRef.current;
+    const previousActiveElement = document.activeElement;
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusableElements = () => Array.from(dialog?.querySelectorAll(focusableSelector) || []);
+    const frame = window.requestAnimationFrame(() => focusableElements()[0]?.focus());
 
-    const keepFocusInside = (event) => {
-      if (event.key !== "Tab" || !dialogRef.current) return;
+    const handleKeyDown = (event) => {
+      if (event.key !== "Tab") return;
 
-      const focusable = Array.from(
-        dialogRef.current.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')
-      );
+      const elements = focusableElements();
+      if (!elements.length) return;
 
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
+      const first = elements[0];
+      const last = elements[elements.length - 1];
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
@@ -142,12 +139,12 @@ export function SiteMasterclassPromo({
       }
     };
 
-    document.addEventListener("keydown", keepFocusInside);
+    dialog?.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.cancelAnimationFrame(frame);
-      document.removeEventListener("keydown", keepFocusInside);
-      previousFocusRef.current?.focus?.();
+      dialog?.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement?.focus?.();
     };
   }, [isDialogOpen]);
 
@@ -158,11 +155,36 @@ export function SiteMasterclassPromo({
       <section className="site-masterclass-promo" aria-labelledby="site-masterclass-promo-title">
         <div className="site-masterclass-promo-card">
           <div className="site-masterclass-promo-photo">
-            <img
-              src="/assets/site/masterclass-real/masterclass-real-06.webp"
-              alt="Дети на мастер-классе рядом с приготовленными пиццами"
-              loading="eager"
-            />
+            <picture>
+              <source
+                type="image/avif"
+                media="(max-width: 640px)"
+                srcSet="/assets/site/masterclass-promo-hero-480.avif"
+              />
+              <source
+                type="image/avif"
+                srcSet="/assets/site/masterclass-promo-hero-480.avif 480w, /assets/site/masterclass-promo-hero-800.avif 800w"
+                sizes="(max-width: 640px) calc(100vw - 28px), (max-width: 860px) 40vw, 594px"
+              />
+              <source
+                type="image/webp"
+                media="(max-width: 640px)"
+                srcSet="/assets/site/masterclass-promo-hero-480.webp"
+              />
+              <source
+                type="image/webp"
+                srcSet="/assets/site/masterclass-promo-hero-480.webp 480w, /assets/site/masterclass-promo-hero-800.webp 800w"
+                sizes="(max-width: 640px) calc(100vw - 28px), (max-width: 860px) 40vw, 594px"
+              />
+              <img
+                src="/assets/site/masterclass-promo-hero-800.webp"
+                alt="Дети на мастер-классе рядом с приготовленными пиццами"
+                width="800"
+                height="383"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <span className="site-masterclass-promo-date">
               <CalendarDays size={18} />
               {urgencyLabels.date} · {EVENT.timeLabel}
@@ -176,78 +198,104 @@ export function SiteMasterclassPromo({
             </span>
             <h2 id="site-masterclass-promo-title">Приходите готовить пиццу вместе</h2>
             <p>
-              Наденем фартуки, раскатаем тесто, выберем начинку и вместе с пиццайоло
-              испечём свою пиццу.
+              {EVENT.shortDateLabel} наденем фартуки, раскатаем тесто и вместе с
+              пиццайоло испечём настоящую итальянскую пиццу.
             </p>
 
             <div className="site-masterclass-promo-meta" aria-label="Условия мастер-класса">
-              <strong>900 ₽ <span>за участника</span></strong>
+              <strong>{EVENT.pricePerParticipant} ₽ <span>за участника</span></strong>
               <span className="site-masterclass-promo-places" aria-live="polite">
                 <Heart size={18} fill="currentColor" />
                 Уже {participantLabel}
               </span>
             </div>
 
-            <a className="site-masterclass-promo-action" href={eventPath}>
+            <a
+              className="site-masterclass-promo-action"
+              href={eventPath}
+              data-metrika-goal="masterclass_open"
+            >
               Записаться
               <ArrowRight size={19} />
             </a>
           </div>
         </div>
       </section>
-
       {isDialogOpen ? (
         <div
           className="site-masterclass-promo-layer"
+          role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) onDialogClose();
+            if (event.target === event.currentTarget) onClose?.();
           }}
         >
           <section
+            ref={dialogRef}
             className="site-masterclass-promo-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="site-masterclass-dialog-title"
-            aria-describedby="site-masterclass-dialog-description"
-            ref={dialogRef}
           >
             <button
               className="site-masterclass-promo-close"
               type="button"
-              aria-label="Закрыть приглашение"
-              onClick={onDialogClose}
+              aria-label="Закрыть окно мастер-класса"
+              onClick={onClose}
             >
               <X size={22} />
             </button>
 
             <div className="site-masterclass-promo-dialog-photo">
-              <img
-                src="/assets/site/masterclass-real/masterclass-real-03.webp"
-                alt="Дети готовят пиццу на мастер-классе"
-              />
+              <picture>
+                <source
+                  type="image/avif"
+                  srcSet="/assets/site/masterclass-promo-hero-480.avif 480w, /assets/site/masterclass-promo-hero-800.avif 800w"
+                  sizes="(max-width: 720px) calc(100vw - 24px), 52vw"
+                />
+                <source
+                  type="image/webp"
+                  srcSet="/assets/site/masterclass-promo-hero-480.webp 480w, /assets/site/masterclass-promo-hero-800.webp 800w"
+                  sizes="(max-width: 720px) calc(100vw - 24px), 52vw"
+                />
+                <img
+                  src="/assets/site/masterclass-promo-hero-800.webp"
+                  alt="Дети готовят пиццу на мастер-классе во Вместе Вкуснее"
+                  width="800"
+                  height="383"
+                  loading="eager"
+                  fetchpriority="high"
+                />
+              </picture>
             </div>
 
             <div className="site-masterclass-promo-dialog-copy">
               <span className="site-masterclass-promo-dialog-kicker">
-                {EVENT.shortDateLabel} · {EVENT.timeLabel}
+                <ChefHat size={18} />
+                {urgencyLabels.kicker}
               </span>
-              <h2 id="site-masterclass-dialog-title">
-                Приглашаем на мастер-класс {urgencyLabels.kicker.toLowerCase()}
-              </h2>
-              <p id="site-masterclass-dialog-description">
-                Готовим настоящую итальянскую пиццу на итальянском тесте в настоящей
-                итальянской печи вместе с нашим пиццайоло. Очень ждём вас!
+              <h2 id="site-masterclass-dialog-title">Приходите готовить пиццу вместе</h2>
+              <p>
+                {EVENT.shortDateLabel} готовим настоящую итальянскую пиццу вместе с
+                нашим пиццайоло и выпекаем её в итальянской печи.
               </p>
-
               <div className="site-masterclass-promo-dialog-facts">
-                <span><Clock3 size={18} /> 11:00 · 900 ₽</span>
-                <span className="site-masterclass-promo-places">
-                  <Heart size={18} fill="currentColor" /> Уже {participantLabel}
+                <span><CalendarDays size={18} />{urgencyLabels.date}</span>
+                <span><Clock size={18} />{EVENT.timeLabel}</span>
+                <span><MapPin size={18} />Пирогова, 1Т</span>
+                <span className="site-masterclass-promo-places" aria-live="polite">
+                  <Heart size={18} fill="currentColor" />
+                  Уже {participantLabel}
                 </span>
-                <span><MapPin size={18} /> Пирогова, 1Т</span>
               </div>
-
-              <a className="site-masterclass-promo-dialog-action" href={eventPath}>
+              <div className="site-masterclass-promo-dialog-price">
+                <strong>{EVENT.pricePerParticipant} ₽</strong>
+                <span>за участника</span>
+              </div>
+              <a
+                className="site-masterclass-promo-dialog-action"
+                href={eventPath}
+                data-metrika-goal="masterclass_open"
+              >
                 Записаться на мастер-класс
                 <ArrowRight size={19} />
               </a>

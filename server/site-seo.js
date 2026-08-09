@@ -34,6 +34,81 @@ function renderInternalLinks(items) {
     </nav>`;
 }
 
+function renderAnswerSections(items = []) {
+  if (!items.length) return "";
+
+  return `
+    <section class="site-server-answers" aria-labelledby="site-server-answers-title">
+      <h2 id="site-server-answers-title">Короткие ответы</h2>
+      ${items.map((item) => `
+        <article>
+          <h3>${escapeHtml(item.heading)}</h3>
+          <p>${escapeHtml(item.answer)}</p>
+        </article>`).join("")}
+    </section>`;
+}
+
+function formatDateRu(value) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function renderSources(items = [], dateModified = "") {
+  if (!items.length) return "";
+
+  return `
+    <section class="site-server-sources" aria-labelledby="site-server-sources-title">
+      <h2 id="site-server-sources-title">Источники</h2>
+      ${dateModified ? `<p>Источники проверены <time datetime="${escapeHtml(dateModified)}">${escapeHtml(formatDateRu(dateModified))}</time>.</p>` : ""}
+      <ul>
+        ${items.map((item) => `
+          <li><a href="${escapeHtml(item.href)}" rel="noreferrer">${escapeHtml(item.label)}</a></li>`).join("")}
+      </ul>
+    </section>`;
+}
+
+function renderCatalogSnapshot(catalog) {
+  const categories = Array.isArray(catalog?.categories) ? catalog.categories : [];
+  const products = Array.isArray(catalog?.products)
+    ? catalog.products.filter((product) => product?.name && Number(product.price) > 0)
+    : [];
+  if (!categories.length || !products.length) return "";
+
+  const productsByCategory = new Map();
+  products.forEach((product) => {
+    const categoryId = product.category || product.categoryId;
+    if (!productsByCategory.has(categoryId)) productsByCategory.set(categoryId, []);
+    productsByCategory.get(categoryId).push(product);
+  });
+
+  const groups = categories
+    .map((category) => ({ category, products: productsByCategory.get(category.id) || [] }))
+    .filter((group) => group.products.length);
+  if (!groups.length) return "";
+
+  return `
+    <section class="site-server-menu" id="server-menu" aria-labelledby="site-server-menu-title">
+      <h2 id="site-server-menu-title">Актуальное меню и цены</h2>
+      <p>Цены загружены из того же действующего каталога, который используется при оформлении заказа.</p>
+      ${groups.map(({ category, products: categoryProducts }) => `
+        <section aria-labelledby="site-server-category-${escapeHtml(category.id)}">
+          <h3 id="site-server-category-${escapeHtml(category.id)}">${escapeHtml(category.title)}</h3>
+          <ul>
+            ${categoryProducts.map((product) => `
+              <li>
+                <span>${escapeHtml(product.name)}${product.weight ? `, ${escapeHtml(product.weight)}` : ""}</span>
+                <data value="${escapeHtml(product.price)}">${Number(product.price).toLocaleString("ru-RU")} ₽</data>
+              </li>`).join("")}
+          </ul>
+        </section>`).join("")}
+    </section>`;
+}
+
 function buildBreadcrumbSchema(page) {
   if (!page.breadcrumbs.length) return null;
 
@@ -78,6 +153,14 @@ export function buildDefaultPageSchema(page) {
   if (page.schemaType === "Article") {
     pageNode.author = { "@id": restaurantId };
     pageNode.publisher = { "@id": restaurantId };
+    if (page.dateModified) pageNode.dateModified = page.dateModified;
+    if (page.sources?.length) pageNode.citation = page.sources.map((source) => source.href);
+  }
+
+  if (page.schemaType === "Service") {
+    pageNode.serviceType = page.serviceType || page.h1;
+    pageNode.provider = { "@id": restaurantId };
+    pageNode.areaServed = { "@type": "City", name: "Чебоксары" };
   }
 
   return {
@@ -183,8 +266,42 @@ export function buildDefaultPageSchema(page) {
   };
 }
 
-export function renderSeoDocument(source, page, schema = buildDefaultPageSchema(page)) {
+export function renderSeoDocument(
+  source,
+  page,
+  schema = buildDefaultPageSchema(page),
+  { catalog = null, appHtml = "" } = {}
+) {
   const socialType = page.schemaType === "Article" ? "article" : "website";
+  const homepageLcpImages = [
+    {
+      href: "/assets/site/interior-window-hero-720.avif",
+      srcset: "/assets/site/interior-window-hero-480.avif 480w, /assets/site/interior-window-hero-720.avif 720w",
+      sizes: "(max-width: 768px) calc(100vw - 52px), 360px"
+    }
+  ];
+  const routeLcpImages = page.path === "/"
+    ? homepageLcpImages
+    : page.path === "/bez-perchatok"
+      ? [{
+          href: "/assets/site/no-gloves-hero-1280.avif",
+          srcset: "/assets/site/no-gloves-hero-640.avif 640w, /assets/site/no-gloves-hero-1280.avif 1280w",
+          sizes: "100vw"
+        }]
+      : [];
+  const lcpPreload = routeLcpImages
+    .map((image) => `
+    <link
+      rel="preload"
+      as="image"
+      href="${image.href}"
+      ${image.srcset ? `imagesrcset="${image.srcset}"` : ""}
+      ${image.sizes ? `imagesizes="${image.sizes}"` : ""}
+      ${image.media ? `media="${image.media}"` : ""}
+      type="image/avif"
+      fetchpriority="high"
+    />`)
+    .join("");
   const metadata = `
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="${escapeHtml(page.canonicalUrl)}" />
@@ -211,16 +328,38 @@ export function renderSeoDocument(source, page, schema = buildDefaultPageSchema(
       <p class="site-server-seo-eyebrow">${escapeHtml(SITE_ENTITY.name)}</p>
       <h1 id="site-server-seo-title">${escapeHtml(page.h1)}</h1>
       <p>${escapeHtml(page.intro)}</p>
+      ${renderAnswerSections(page.answers)}
+      ${page.path === "/" ? renderCatalogSnapshot(catalog) : ""}
+      ${renderSources(page.sources, page.dateModified)}
       ${renderInternalLinks(page.links)}
     </main>
   `;
+  const supplementalContent = appHtml
+    ? `
+    <section class="site-server-seo site-server-seo-supplement" aria-labelledby="site-server-answers-title">
+      ${renderAnswerSections(page.answers)}
+      ${page.path === "/" ? renderCatalogSnapshot(catalog) : ""}
+      ${renderSources(page.sources, page.dateModified)}
+      ${renderInternalLinks(page.links)}
+    </section>
+  `
+    : "";
+  const documentWithLcpPreload = /<meta\s+name="viewport"[\s\S]*?>/i.test(source)
+    ? String(source).replace(
+        /(<meta\s+name="viewport"[\s\S]*?>)/i,
+        `$1${lcpPreload}`
+      )
+    : String(source).replace(/<head>/i, `<head>${lcpPreload}`);
 
-  return String(source)
+  return documentWithLcpPreload
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(page.title)}</title>`)
     .replace(
       /<meta\s+name="description"[\s\S]*?>/i,
       `<meta name="description" content="${escapeHtml(page.description)}" />`
     )
     .replace("</head>", `${metadata}\n  </head>`)
-    .replace(/<div\s+id="root"\s*><\/div>/i, `<div id="root">${content}</div>`);
+    .replace(
+      /<div\s+id="root"\s*><\/div>/i,
+      `<div id="root">${appHtml || content}</div>${supplementalContent}`
+    );
 }

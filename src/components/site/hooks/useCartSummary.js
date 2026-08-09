@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getStoredCartSummary, saveStoredCart, saveStoredPromo } from "../cartModel";
-import { pluralRu } from "../siteData";
+import { pluralRu } from "../siteCoreData";
 
 export function useCartSummary() {
   const [cartSummary, setCartSummary] = useState(() => getStoredCartSummary());

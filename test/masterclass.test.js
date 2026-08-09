@@ -1,12 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  assertMasterclassPaymentOpen,
   normalizeMasterclassEmail,
   normalizeMasterclassPhone,
   validateMasterclassRegistration
 } from "../server/masterclass.js";
 import {
+  getActiveMasterclassEvent,
+  getMasterclassEventById,
   getMasterclassEventByPath,
+  getNextMasterclassEvent,
   MASTERCLASS_EVENT
 } from "../shared/masterclass-events.js";
 
@@ -101,14 +105,19 @@ test("validateMasterclassRegistration requires separate mandatory consents", () 
   );
 });
 
-test("masterclass event keeps a stable dated page and the legacy link", () => {
+test("masterclass events keep the archived page and select the next open date", () => {
+  const archivedEvent = getMasterclassEventById("pizza-2026-08-09");
+
   assert.equal(
-    MASTERCLASS_EVENT.path,
+    archivedEvent.path,
     "/master-klassy/pizza-vetchina-griby-9-avgusta-2026"
   );
-  assert.equal(MASTERCLASS_EVENT.startsAt, "2026-08-09T11:00:00+03:00");
+  assert.equal(archivedEvent.status, "cancelled");
+  assert.equal(archivedEvent.pageMode, "archive");
+  assert.equal(MASTERCLASS_EVENT.path, "/master-klassy/pizza-vetchina-griby-16-avgusta-2026");
+  assert.equal(MASTERCLASS_EVENT.startsAt, "2026-08-16T11:00:00+03:00");
   assert.equal(
-    getMasterclassEventByPath(MASTERCLASS_EVENT.path)?.id,
+    getNextMasterclassEvent(archivedEvent)?.id,
     MASTERCLASS_EVENT.id
   );
   assert.equal(
@@ -119,10 +128,25 @@ test("masterclass event keeps a stable dated page and the legacy link", () => {
     getMasterclassEventByPath(
       "/master-klassy/pizza-vetchina-griby-2-avgusta-2026"
     )?.id,
-    MASTERCLASS_EVENT.id
+    archivedEvent.id
   );
   assert.equal(
     getMasterclassEventByPath(`/dev${MASTERCLASS_EVENT.path}`)?.id,
     MASTERCLASS_EVENT.id
+  );
+  assert.equal(
+    getActiveMasterclassEvent("2026-08-09T12:00:00+03:00")?.id,
+    MASTERCLASS_EVENT.id
+  );
+});
+
+test("archived masterclass rejects new payments while the next event accepts them", () => {
+  assert.throws(
+    () => assertMasterclassPaymentOpen("pizza-2026-08-09", "2026-08-09T09:00:00+03:00"),
+    /Оплата этого мастер-класса закрыта/
+  );
+  assert.equal(
+    assertMasterclassPaymentOpen("pizza-2026-08-16", "2026-08-09T12:00:00+03:00").id,
+    "pizza-2026-08-16"
   );
 });

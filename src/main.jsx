@@ -1,10 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import "leaflet/dist/leaflet.css";
-import "./styles.css";
-import "./final-polish.css";
+import "./design-system.css";
+import "./app-shell.css";
 import "./site-showcase.css";
 import App from "./App";
+import { initMetrikaTracking } from "./utils/analytics";
+
+initMetrikaTracking();
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

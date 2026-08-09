@@ -1,5 +1,5 @@
 import { Baby, CalendarCheck, ChefHat, CheckCircle2, Clock, Pizza, Truck, Utensils } from "lucide-react";
-import { ASSET, PHONE, RESTAURANT, getSiteOrderPath, telHref } from "./siteData";
+import { ASSET, PHONE, RESTAURANT, getSiteOrderPath, telHref } from "./siteCoreData";
 
 const aboutCards = [
   {
@@ -76,7 +76,26 @@ export function SiteAboutSection({ deliveredOrdersTotal = 0, proofAddon = null }
       </div>
 
       <div className="site-about-visual" aria-hidden="true">
-        <img src={`${ASSET}interior-window-real.webp`} alt="" loading="lazy" />
+        <picture>
+          <source
+            type="image/avif"
+            srcSet={`${ASSET}interior-window-hero-480.avif 480w, ${ASSET}interior-window-hero-720.avif 720w`}
+            sizes="(max-width: 768px) calc(100vw - 52px), 360px"
+          />
+          <source
+            type="image/webp"
+            srcSet={`${ASSET}interior-window-hero-480.webp 480w, ${ASSET}interior-window-hero-720.webp 720w`}
+            sizes="(max-width: 768px) calc(100vw - 52px), 360px"
+          />
+          <img
+            src={`${ASSET}interior-window-hero-720.webp`}
+            alt=""
+            width="720"
+            height="636"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </picture>
         <div>
           <Clock size={18} />
           <span>Ежедневно</span>

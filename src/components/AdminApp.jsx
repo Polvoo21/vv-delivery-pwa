@@ -1,3 +1,5 @@
+import "../styles.css";
+import "../final-polish.css";
 import { useEffect, useMemo, useState } from "react";
 import {
   Archive,

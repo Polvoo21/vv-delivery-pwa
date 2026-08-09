@@ -1,5 +1,3 @@
-@import "./design-system.css";
-
 :root {
   --bg: var(--vv-bg);
   --bg-soft: var(--vv-bg-soft);

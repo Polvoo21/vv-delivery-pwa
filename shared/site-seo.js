@@ -1,6 +1,7 @@
 import { DELIVERY_MIN_ORDER_AMOUNT } from "./order-rules.js";
 import {
   getMasterclassEventByPath,
+  getNextMasterclassEvent,
   INDIVIDUAL_MASTERCLASS_PAGE,
   INDIVIDUAL_MASTERCLASS_PATH,
   MASTERCLASS_EVENTS,
@@ -48,6 +49,7 @@ const LEGAL_CRUMB = Object.freeze({ name: "Правовая информация
 
 const COMMON_LINKS = Object.freeze([
   { label: "Меню пиццерии", href: "/#menu" },
+  { label: "Доставка и самовывоз", href: "/dostavka" },
   { label: "Зоны доставки", href: "/delivery-zones" },
   { label: "Мастер-классы", href: MASTERCLASSES_PATH },
   { label: "Контакты", href: "/#contacts" }
@@ -65,6 +67,23 @@ const CORE_PAGES = [
     imagePath: "/assets/social/og-default-1200x630.jpg",
     imageAlt: "Итальянская пицца в семейной пиццерии «Вместе Вкуснее»",
     schemaType: "WebPage",
+    answers: [
+      {
+        heading: "Где находится пиццерия и когда она работает?",
+        answer:
+          "Мы находимся в Чебоксарах по адресу улица Пирогова, 1Т. Пиццерия работает ежедневно с 09:00 до 22:00, телефон +7 (8352) 66-77-77."
+      },
+      {
+        heading: "Можно ли заказать доставку или самовывоз?",
+        answer:
+          `Да. Бесплатная доставка доступна в отмеченной зоне при заказе от ${DELIVERY_MIN_ORDER_AMOUNT.toLocaleString("ru-RU")} ₽ после скидок. Самовывоз с Пирогова, 1Т доступен без минимальной суммы.`
+      },
+      {
+        heading: "Какие услуги доступны?",
+        answer:
+          "В пиццерии можно поесть в зале, оформить доставку или самовывоз, записаться на кулинарный мастер-класс и обсудить семейный праздник."
+      }
+    ],
     breadcrumbs: [],
     links: COMMON_LINKS
   },
@@ -87,6 +106,47 @@ const CORE_PAGES = [
     ]
   },
   {
+    path: "/dostavka",
+    title: "Доставка пиццы и еды в Чебоксарах | Вместе Вкуснее",
+    description:
+      `Доставка пиццы и блюд «Вместе Вкуснее» по Чебоксарам: бесплатно от ${DELIVERY_MIN_ORDER_AMOUNT.toLocaleString("ru-RU")} ₽ после скидок. Самовывоз с Пирогова, 1Т без минимальной суммы.`,
+    h1: "Доставка пиццы и еды в Чебоксарах",
+    intro:
+      `Закажите блюда «Вместе Вкуснее» онлайн. Доставка по доступной зоне бесплатна от ${DELIVERY_MIN_ORDER_AMOUNT.toLocaleString("ru-RU")} ₽ после скидок, а самовывоз с Пирогова, 1Т доступен без минимальной суммы.`,
+    imagePath: "/assets/social/og-delivery-1200x630.jpg",
+    imageAlt: "Пицца для доставки из семейной пиццерии «Вместе Вкуснее»",
+    schemaType: "Service",
+    serviceType: "Доставка еды и самовывоз",
+    answers: [
+      {
+        heading: "Сколько стоит доставка?",
+        answer:
+          `Доставка бесплатная при сумме заказа от ${DELIVERY_MIN_ORDER_AMOUNT.toLocaleString("ru-RU")} ₽ после применения скидок. Отдельной платы за доставку в доступной зоне нет.`
+      },
+      {
+        heading: "Есть ли минимальная сумма для самовывоза?",
+        answer:
+          "Нет. Самовывоз можно оформить на любую сумму и забрать по адресу Чебоксары, улица Пирогова, 1Т."
+      },
+      {
+        heading: "Как узнать, доставляете ли вы по моему адресу?",
+        answer:
+          "Откройте карту зон или укажите адрес при оформлении заказа. Сайт сразу проверит адрес и покажет доступный способ получения."
+      },
+      {
+        heading: "В какое время можно заказать?",
+        answer:
+          "Пиццерия работает ежедневно с 09:00 до 22:00. Доступные интервалы и точное время получения показываются при оформлении заказа."
+      }
+    ],
+    breadcrumbs: [HOME_CRUMB, { name: "Доставка и самовывоз", path: "/dostavka" }],
+    links: [
+      { label: "Открыть меню", href: "/#menu" },
+      { label: "Проверить зоны доставки", href: "/delivery-zones" },
+      { label: "Оформить заказ", href: "/checkout" }
+    ]
+  },
+  {
     path: "/delivery-zones",
     title: "Зоны доставки | Вместе Вкуснее",
     description:
@@ -97,6 +157,23 @@ const CORE_PAGES = [
     imagePath: "/assets/social/og-delivery-1200x630.jpg",
     imageAlt: "Доставка блюд семейной пиццерии «Вместе Вкуснее»",
     schemaType: "WebPage",
+    answers: [
+      {
+        heading: "Куда доставляет «Вместе Вкуснее»?",
+        answer:
+          "Мы доставляем по отмеченным на карте районам Чебоксар. Окончательная доступность определяется по адресу при оформлении заказа."
+      },
+      {
+        heading: "Какая минимальная сумма заказа?",
+        answer:
+          `Для доставки нужно заказать минимум на ${DELIVERY_MIN_ORDER_AMOUNT.toLocaleString("ru-RU")} ₽ после скидок. Для самовывоза минимальной суммы нет.`
+      },
+      {
+        heading: "Могут ли зоны меняться?",
+        answer:
+          "Да. Доступность может временно меняться из-за загрузки кухни, погоды и дорожной обстановки; актуальная проверка выполняется при вводе адреса."
+      }
+    ],
     breadcrumbs: [HOME_CRUMB, { name: "Зоны доставки", path: "/delivery-zones" }],
     links: [
       { label: "Посмотреть меню", href: "/#menu" },
@@ -133,6 +210,34 @@ const CORE_PAGES = [
     imagePath: "/assets/social/og-kitchen-1200x630.jpg",
     imageAlt: "Пицца рядом с горячей печью в «Вместе Вкуснее»",
     schemaType: "Article",
+    dateModified: "2026-08-08",
+    answers: [
+      {
+        heading: "Разрешено ли готовить пиццу без перчаток?",
+        answer:
+          "Санитарные правила требуют перчатки для порционирования готовых блюд, холодных закусок и салатов. Для работы с тестом до выпекания ключевыми остаются гигиена рук, чистый инвентарь и соблюдение технологического процесса."
+      },
+      {
+        heading: "Когда сотрудники используют перчатки?",
+        answer:
+          "Перчатки используются при работе с готовыми холодными блюдами, порционировании и сервировке, а также при повреждении кожи, уборке и работе с химией."
+      },
+      {
+        heading: "На какие документы мы ссылаемся?",
+        answer:
+          "На СанПиН 2.3/2.4.3590-20 и разъяснения Роспотребнадзора о личной гигиене работников общественного питания."
+      }
+    ],
+    sources: [
+      {
+        label: "СанПиН 2.3/2.4.3590-20 на официальном портале правовой информации",
+        href: "https://publication.pravo.gov.ru/document/view/0001202011120001"
+      },
+      {
+        label: "Рекомендации Роспотребнадзора для предприятий общественного питания",
+        href: "https://zpp.rospotrebnadzor.ru/news/federal/574818"
+      }
+    ],
     breadcrumbs: [HOME_CRUMB, { name: "Открыто о кухне", path: "/bez-perchatok" }],
     links: [
       { label: "Посмотреть меню", href: "/#menu" },
@@ -189,6 +294,12 @@ function finalizePage(page) {
     ...page,
     canonicalUrl,
     imageUrl: `${SITE_ORIGIN}${page.imagePath}`,
+    answers: Object.freeze(
+      (page.answers || []).map((item) => Object.freeze({ ...item }))
+    ),
+    sources: Object.freeze(
+      (page.sources || []).map((item) => Object.freeze({ ...item }))
+    ),
     breadcrumbs: Object.freeze(
       page.breadcrumbs.map((item) => Object.freeze({
         ...item,
@@ -207,15 +318,32 @@ function getMasterclassSeoPage(pathname) {
   if (pathname === MASTERCLASSES_PATH) {
     return finalizePage({
       path: MASTERCLASSES_PATH,
-      title: "Кулинарные мастер-классы в Чебоксарах | Вместе Вкуснее",
+      title: "Куда сходить с ребёнком в Чебоксарах | Вместе Вкуснее",
       description:
-        "Кулинарные мастер-классы по пицце для детей и взрослых в семейной пиццерии «Вместе Вкуснее» в Чебоксарах. Даты, запись и фотографии встреч.",
-      h1: "Воскресенья, после которых хочется готовить ещё",
+        "Кулинарные мастер-классы для детей и взрослых в Чебоксарах. Готовим пиццу с пиццайоло: актуальные даты, стоимость и онлайн-запись.",
+      h1: "Кулинарные мастер-классы для детей и взрослых в Чебоксарах",
       intro:
-        "Кулинарные мастер-классы для детей и взрослых в Чебоксарах: готовим на настоящей кухне, учимся у пиццайоло и уходим со своей горячей пиццей.",
+        "Если вы выбираете, чем заняться в Чебоксарах или куда сходить с ребёнком, приходите на кулинарный мастер-класс: готовим на настоящей кухне, учимся у пиццайоло и уходим со своей горячей пиццей.",
       imagePath: "/assets/social/og-masterclasses-1200x630.jpg",
       imageAlt: "Кулинарный мастер-класс в семейной пиццерии «Вместе Вкуснее»",
       schemaType: "CollectionPage",
+      answers: [
+        {
+          heading: "Куда сходить с ребёнком в Чебоксарах?",
+          answer:
+            "На воскресном мастер-классе во «Вместе Вкуснее» дети и взрослые готовят свою пиццу вместе с пиццайоло на настоящей кухне пиццерии."
+        },
+        {
+          heading: "Где проходят встречи?",
+          answer:
+            "В семейной пиццерии «Вместе Вкуснее» по адресу Чебоксары, улица Пирогова, 1Т."
+        },
+        {
+          heading: "Как узнать дату и стоимость?",
+          answer:
+            "Актуальные даты и цена публикуются на странице конкретной встречи. Для отдельного праздника дату, программу и стоимость согласует администратор."
+        }
+      ],
       breadcrumbs: [HOME_CRUMB, MASTERCLASSES_CRUMB],
       links: [
         { label: "Индивидуальный мастер-класс", href: INDIVIDUAL_MASTERCLASS_PATH },
@@ -236,6 +364,24 @@ function getMasterclassSeoPage(pathname) {
       imagePath: "/assets/social/og-masterclasses-1200x630.jpg",
       imageAlt: "Ребёнок готовит пиццу вместе с пиццайоло на празднике",
       schemaType: "Service",
+      serviceType: "Индивидуальный кулинарный мастер-класс",
+      answers: [
+        {
+          heading: "Что входит в индивидуальный мастер-класс?",
+          answer:
+            "Участники готовят пиццу и лимонад вместе с пиццайоло на настоящей кухне. Программу уточняем под возраст и размер компании."
+        },
+        {
+          heading: "Когда можно провести праздник?",
+          answer:
+            "Дату и время согласовываем индивидуально после проверки загрузки кухни и зала."
+        },
+        {
+          heading: "Сколько стоит мастер-класс?",
+          answer:
+            "Итоговая стоимость зависит от даты, программы и числа участников. Администратор называет точную сумму до подтверждения записи."
+        }
+      ],
       breadcrumbs: [
         HOME_CRUMB,
         MASTERCLASSES_CRUMB,
@@ -251,23 +397,63 @@ function getMasterclassSeoPage(pathname) {
 
   const event = getMasterclassEventByPath(pathname);
   if (!event) return null;
+  const isCancelled = event.status === "cancelled" || event.pageMode === "archive";
+  const nextEvent = getNextMasterclassEvent(event);
 
   return finalizePage({
     path: event.path,
     title: event.seoTitle,
     description: event.seoDescription,
-    h1: "Мастер-класс по пицце для детей и взрослых",
-    intro:
-      `На мастер-классе ${event.shortDateLabel} участники приготовят ${event.pizzaAccusative} и лимонад вместе с пиццайоло. Стоимость — ${event.pricePerParticipant.toLocaleString("ru-RU")} ₽ за участника.`,
+    h1: isCancelled
+      ? `Мастер-класс ${event.shortDateLabel} не состоялся`
+      : "Мастер-класс по пицце для детей и взрослых",
+    intro: isCancelled
+      ? `Мастер-класс ${event.shortDateLabel} не состоялся: группа не набралась. Фотографий и видео с этой встречи не будет. На странице можно перейти к ближайшему мастер-классу с открытой записью.`
+      : `На мастер-классе ${event.shortDateLabel} участники приготовят ${event.pizzaAccusative} и лимонад вместе с пиццайоло. Стоимость — ${event.pricePerParticipant.toLocaleString("ru-RU")} ₽ за участника.`,
     imagePath: "/assets/social/og-masterclasses-1200x630.jpg",
     imageAlt: "Ребёнок готовит пиццу вместе с пиццайоло",
     schemaType: "Event",
+    answers: isCancelled ? [
+      {
+        heading: "Почему мастер-класс не состоялся?",
+        answer: `На ${event.shortDateLabel} не набралось минимальное число участников, поэтому встречу отменили.`
+      },
+      {
+        heading: "Будут ли фотографии и видео?",
+        answer: "Нет. Мастер-класс не проводился, поэтому фотографий и видео с этой даты не будет."
+      },
+      {
+        heading: "Где записаться на следующий мастер-класс?",
+        answer: nextEvent
+          ? `Ближайший мастер-класс пройдёт ${nextEvent.dateLabel.toLowerCase()} в ${nextEvent.timeLabel}. Ссылка на этой странице ведёт на актуальную запись.`
+          : "Новые даты появятся в разделе мастер-классов."
+      }
+    ] : [
+      {
+        heading: `Куда сходить с ребёнком в Чебоксарах ${event.shortDateLabel}?`,
+        answer:
+          `${event.dateLabel} в ${event.timeLabel} можно прийти на мастер-класс по пицце для детей и взрослых по адресу Чебоксары, улица Пирогова, 1Т.`
+      },
+      {
+        heading: "Сколько стоит участие?",
+        answer:
+          `${event.pricePerParticipant.toLocaleString("ru-RU")} ₽ за одного участника. Запись подтверждается после оплаты.`
+      },
+      {
+        heading: "Что приготовит участник?",
+        answer:
+          `Каждый участник приготовит ${event.pizzaAccusative} и лимонад вместе с пиццайоло.`
+      }
+    ],
     breadcrumbs: [
       HOME_CRUMB,
       MASTERCLASSES_CRUMB,
       { name: event.cardTitle, path: event.path }
     ],
     links: [
+      ...(nextEvent
+        ? [{ label: `Записаться на ${nextEvent.shortDateLabel}`, href: nextEvent.path }]
+        : []),
       { label: "Все мастер-классы", href: MASTERCLASSES_PATH },
       { label: "Индивидуальный мастер-класс", href: INDIVIDUAL_MASTERCLASS_PATH },
       { label: "Контакты", href: "/#contacts" }

@@ -1,19 +1,8 @@
 import { MENU_CATEGORIES, isPublicMenuCategory } from "./menu";
+import { RESTAURANT } from "./restaurant";
+import { PRICING_POLICY_VERSION } from "./pricing-policy";
 
-export const RESTAURANT = {
-  name: "Вместе Вкуснее",
-  subtitle: "Семейная пиццерия",
-  address: "Чебоксары, ул. Пирогова, 1Т",
-  shortAddress: "Пирогова, 1Т",
-  phone: "+7 (8352) 66-77-77",
-  workHours: "09:00–22:00",
-  coords: {
-    lat: 56.140976,
-    lng: 47.223716
-  },
-  deliveryEta: "примерно 45 мин",
-  pickupEta: "15–20 мин"
-};
+export { RESTAURANT, PRICING_POLICY_VERSION };
 
 export const MAP_CONFIG = {
   defaultZoom: 13,
@@ -71,5 +60,3 @@ export const CATEGORY_LIST = [
       title: category.shortTitle || category.title
     }))
 ];
-
-export const PRICING_POLICY_VERSION = 2;

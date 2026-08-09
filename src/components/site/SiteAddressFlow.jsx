@@ -4,7 +4,7 @@ import { DELIVERY_MIN_ORDER_AMOUNT } from "../../../shared/order-rules";
 import { MAP_CONFIG } from "../../data/config";
 import { formatPrice } from "../../utils/price";
 import { loadDeliveryZones, makeDeliveryZoneLayerStyle } from "./deliveryZones";
-import { DELIVERY_STORAGE_KEY, RESTAURANT } from "./siteData";
+import { RESTAURANT } from "./siteCoreData";
 
 const emptyFulfillment = {
   mode: "delivery",
@@ -29,35 +29,6 @@ function stripCityFromAddress(value = "") {
   return String(value)
     .replace(/^\s*(?:г(?:ород)?\.?\s*)?Чебоксары\s*,?\s*/i, "")
     .trimStart();
-}
-
-export function readSiteFulfillment() {
-  if (typeof window === "undefined") return normalizeFulfillment();
-
-  try {
-    const parsedState = JSON.parse(window.localStorage.getItem(DELIVERY_STORAGE_KEY) || "{}");
-    return normalizeFulfillment(parsedState.fulfillment);
-  } catch {
-    return normalizeFulfillment();
-  }
-}
-
-export function saveSiteFulfillment(fulfillment) {
-  if (typeof window === "undefined") return normalizeFulfillment(fulfillment);
-
-  const nextFulfillment = normalizeFulfillment(fulfillment);
-
-  try {
-    const parsedState = JSON.parse(window.localStorage.getItem(DELIVERY_STORAGE_KEY) || "{}");
-    window.localStorage.setItem(
-      DELIVERY_STORAGE_KEY,
-      JSON.stringify({ ...parsedState, fulfillment: nextFulfillment })
-    );
-  } catch {
-    window.localStorage.setItem(DELIVERY_STORAGE_KEY, JSON.stringify({ fulfillment: nextFulfillment }));
-  }
-
-  return nextFulfillment;
 }
 
 function buildAddress(address = {}, fallback = "") {
@@ -194,7 +165,10 @@ function SiteZoneMap({ draft, mode, onDraftChange, onZoneStatusChange, onMessage
     let cancelled = false;
 
     async function initMap() {
-      const leaflet = await import("leaflet");
+      const [leaflet] = await Promise.all([
+        import("leaflet"),
+        import("leaflet/dist/leaflet.css")
+      ]);
       if (cancelled || !mapNodeRef.current || mapRef.current) return;
 
       leafletRef.current = leaflet;

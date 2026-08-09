@@ -1,8 +1,10 @@
+import "../../styles/site/masterclass.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
+  CalendarX2,
   Check,
   CheckCircle2,
   ChefHat,
@@ -19,7 +21,9 @@ import {
   Users
 } from "lucide-react";
 import { apiPath } from "../../utils/api";
+import { METRIKA_GOALS, reachMetrikaGoal } from "../../utils/analytics";
 import {
+  getNextMasterclassEvent,
   MASTERCLASSES_PATH,
   MASTERCLASS_EVENT as DEFAULT_MASTERCLASS_EVENT
 } from "../../../shared/masterclass-events";
@@ -253,6 +257,8 @@ function CountField({ id, label, value, max, onChange }) {
 
 export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
   const EVENT = event;
+  const nextEvent = useMemo(() => getNextMasterclassEvent(EVENT), [EVENT]);
+  const isCancelled = EVENT.status === "cancelled" || EVENT.pageMode === "archive";
   const PROCESS_STEPS = useMemo(() => createProcessSteps(EVENT), [EVENT]);
   const FAQ_ITEMS = useMemo(() => createFaqItems(EVENT), [EVENT]);
   const [eventState, setEventState] = useState({
@@ -284,6 +290,7 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
   const registeredParticipants = Number(eventState.registeredParticipants || 0);
   const minimumParticipants = Number(eventState.minimumParticipants || EVENT.minimumParticipants);
   const minimumReached = registeredParticipants >= minimumParticipants;
+  const registrationOpen = eventState.registrationOpen === true && !isCancelled;
   const participantCount = form.adultsCount + form.childrenCount;
   const total = participantCount * EVENT.pricePerParticipant;
 
@@ -316,6 +323,11 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
   }, [loadEvent]);
 
   useEffect(() => {
+    if (isCancelled) {
+      setStage("form");
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const returnedRegistrationId = params.get("registrationId") || "";
     const storedRegistration = readPendingMasterclassPayment();
@@ -334,7 +346,7 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
     setPendingRegistration(registration);
     setStage("payment");
     checkMasterclassPayment(registration);
-  }, [EVENT.id]);
+  }, [EVENT.id, isCancelled]);
 
   useEffect(() => {
     const description = EVENT.seoDescription;
@@ -452,6 +464,12 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
       setPendingRegistration(data.registration);
       savePendingMasterclassPayment(data.registration);
       setStage("payment");
+      reachMetrikaGoal(METRIKA_GOALS.MASTERCLASS_SIGNUP, {
+        event_id: EVENT.id,
+        registration_id: data.registration?.id || "",
+        participants: participantCount,
+        order_total: Number(total || 0)
+      });
     } catch (error) {
       setFormError(error.message || "Не удалось сохранить запись. Попробуйте ещё раз.");
     } finally {
@@ -483,6 +501,12 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
         return;
       }
       if (!data.paymentUrl) throw new Error("ЮKassa не вернула ссылку оплаты.");
+      reachMetrikaGoal(METRIKA_GOALS.MASTERCLASS_PAYMENT, {
+        event_id: EVENT.id,
+        registration_id: data.registration?.id || pendingRegistration.id,
+        participants: participantCount,
+        order_total: Number(total || 0)
+      });
       window.location.href = data.paymentUrl;
     } catch (error) {
       setFormError(error.message || "Не удалось перейти к оплате.");
@@ -502,6 +526,11 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
       ).then(readApiJson);
       setPendingRegistration(data.registration);
       if (data.paid) {
+        reachMetrikaGoal(METRIKA_GOALS.MASTERCLASS_PAID, {
+          event_id: EVENT.id,
+          registration_id: data.registration?.id || registration.id,
+          order_total: Number(data.registration?.total || 0)
+        });
         clearPendingMasterclassPayment();
         setEventState(data.event);
         setFormError("");
@@ -532,38 +561,88 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
 
           <p className="site-eyebrow">Воскресный мастер-класс</p>
           <h1 id="site-masterclass-title">
-            Мастер-класс по пицце для детей и взрослых
+            {isCancelled
+              ? `Мастер-класс ${EVENT.shortDateLabel} не состоялся`
+              : "Мастер-класс по пицце для детей и взрослых"}
           </h1>
 
           <div className="site-masterclass-quick-facts" aria-label="Коротко о мастер-классе">
             <span>{EVENT.shortDateLabel} · {EVENT.timeLabel}</span>
-            <span>Детям и взрослым</span>
-            <span>Пицца и лимонад</span>
-            <span>Своя пицца с собой</span>
+            {isCancelled ? (
+              <>
+                <span>Встреча отменена</span>
+                <span>Группа не набралась</span>
+                <span>Оплата закрыта</span>
+              </>
+            ) : (
+              <>
+                <span>Детям и взрослым</span>
+                <span>Пицца и лимонад</span>
+                <span>Своя пицца с собой</span>
+              </>
+            )}
           </div>
 
           <p className="site-masterclass-hero-lead">
-            Наденете колпак и фартук, поработаете с нашим тестом,
-            соберёте {EVENT.pizzaAccusative}, смешаете освежающий лимонад и испечёте
-            пиццу вместе с пиццайоло в настоящей итальянской печи. А затем можно
-            сразу попробовать горячую пиццу и запить лимонадом собственного приготовления.
+            {isCancelled
+              ? `Мы планировали готовить ${EVENT.pizzaAccusative} и лимонад вместе с пиццайоло, но нужное число участников не собралось. Встречу отменили, а запись и оплату на эту дату закрыли.`
+              : `Наденете колпак и фартук, поработаете с нашим тестом, соберёте ${EVENT.pizzaAccusative}, смешаете освежающий лимонад и испечёте пиццу вместе с пиццайоло в настоящей итальянской печи. А затем можно сразу попробовать горячую пиццу и запить лимонадом собственного приготовления.`}
           </p>
 
+          {isCancelled ? (
+            <div className="site-masterclass-cancelled-notice" role="status">
+              <CalendarX2 size={22} />
+              <div>
+                <strong>Мастер-класс {EVENT.shortDateLabel} не состоялся</strong>
+                <span>Группа не набралась, поэтому фотографий и видео с этой встречи не будет.</span>
+              </div>
+            </div>
+          ) : null}
+
           <div className="site-masterclass-hero-offer" aria-label="Цена и условие проведения">
-            <div>
-              <strong>{formatPrice(EVENT.pricePerParticipant)} ₽</strong>
-              <span>за одного участника</span>
-            </div>
-            <div>
-              <strong>от {EVENT.minimumParticipants} человек</strong>
-              <span>чтобы встреча состоялась</span>
-            </div>
+            {isCancelled ? (
+              <>
+                <div>
+                  <strong>Оплата закрыта</strong>
+                  <span>на прошедшую дату</span>
+                </div>
+                <div>
+                  <strong>{nextEvent?.shortDateLabel || "Новая дата скоро"}</strong>
+                  <span>ближайшая встреча</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <strong>{formatPrice(EVENT.pricePerParticipant)} ₽</strong>
+                  <span>за одного участника</span>
+                </div>
+                <div>
+                  <strong>от {EVENT.minimumParticipants} человек</strong>
+                  <span>чтобы встреча состоялась</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="site-masterclass-hero-actions">
-            <a className="site-masterclass-primary" href="#masterclass-registration-form">
-              Записаться
-            </a>
+            {isCancelled ? (
+              <>
+                <button className="site-masterclass-primary is-disabled" type="button" disabled>
+                  Оплата недоступна
+                </button>
+                {nextEvent ? (
+                  <a className="site-masterclass-secondary is-next" href={getSitePagePath(nextEvent.path)}>
+                    Следующий мастер-класс {nextEvent.shortDateLabel}
+                    <ArrowRight size={18} />
+                  </a>
+                ) : null}
+              </>
+            ) : (
+              <a className="site-masterclass-primary" href="#masterclass-registration-form">
+                Записаться
+              </a>
+            )}
             <a className="site-masterclass-secondary" href={telHref(PHONE)}>
               <Phone size={18} />
               Позвонить
@@ -586,7 +665,9 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
             </div>
           </div>
           <p className="site-masterclass-phone-note">
-            Можно записаться по телефону: администратор добавит участников в список.
+            {isCancelled
+              ? "Если вы успели оплатить участие, администратор свяжется с вами по возврату."
+              : "Можно записаться по телефону: администратор добавит участников в список."}
           </p>
 
           <div className="site-masterclass-event-card" aria-label="Дата, время и место мастер-класса">
@@ -653,6 +734,7 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
         </div>
       </section>
 
+      {!isCancelled ? (
       <section className="site-masterclass-value" aria-labelledby="site-masterclass-value-title">
         <div>
           <p className="site-eyebrow">Впечатление, которое останется</p>
@@ -679,9 +761,32 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
           </div>
         </dl>
       </section>
+      ) : null}
 
       <div className="site-masterclass-layout">
         <div className="site-masterclass-content">
+          {isCancelled ? (
+            <section className="site-masterclass-archive-summary" aria-labelledby="site-masterclass-archive-summary-title">
+              <p className="site-eyebrow">Что дальше</p>
+              <h2 id="site-masterclass-archive-summary-title">Приглашаем на следующую встречу</h2>
+              <p>
+                Мы продолжим проводить воскресные мастер-классы. Формат остаётся тем же:
+                каждый участник приготовит собственную пиццу и лимонад вместе с пиццайоло.
+              </p>
+              {nextEvent ? (
+                <a href={getSitePagePath(nextEvent.path)}>
+                  Записаться на {nextEvent.shortDateLabel}
+                  <ArrowRight size={18} />
+                </a>
+              ) : (
+                <a href={getSitePagePath(MASTERCLASSES_PATH)}>
+                  Все мастер-классы
+                  <ArrowRight size={18} />
+                </a>
+              )}
+            </section>
+          ) : (
+            <>
           <section className="site-masterclass-process" aria-labelledby="site-masterclass-process-title">
             <div className="site-masterclass-section-head">
               <p className="site-eyebrow">Как всё пройдёт</p>
@@ -884,9 +989,44 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
               })}
             </div>
           </section>
+            </>
+          )}
         </div>
 
         <aside className="site-masterclass-signup" id="signup" aria-label="Запись на мастер-класс">
+          {isCancelled ? (
+            <section className="site-masterclass-cancelled-card" aria-labelledby="site-masterclass-cancelled-title">
+              <span className="site-masterclass-cancelled-icon"><CalendarX2 size={30} /></span>
+              <p className="site-eyebrow">Встреча отменена</p>
+              <h2 id="site-masterclass-cancelled-title">Группа на {EVENT.shortDateLabel} не набралась</h2>
+              <p>
+                Мастер-класс не проводился, поэтому фотографий и видео с этой даты не будет.
+                Оплатить участие на прошедшую встречу уже нельзя.
+              </p>
+              <button className="site-masterclass-submit" type="button" disabled>
+                Оплата недоступна
+              </button>
+              {nextEvent ? (
+                <a className="site-masterclass-next-event" href={getSitePagePath(nextEvent.path)}>
+                  <span>
+                    <small>Ближайший мастер-класс</small>
+                    <strong>{nextEvent.dateLabel}, {nextEvent.timeLabel}</strong>
+                  </span>
+                  Записаться
+                  <ArrowRight size={19} />
+                </a>
+              ) : (
+                <a className="site-masterclass-next-event" href={getSitePagePath(MASTERCLASSES_PATH)}>
+                  Посмотреть другие мастер-классы
+                  <ArrowRight size={19} />
+                </a>
+              )}
+              <small>
+                Ссылка на этой архивной странице всегда ведёт на ближайшую встречу с открытой записью.
+              </small>
+            </section>
+          ) : (
+            <>
           <section
             className={`site-masterclass-counter ${minimumReached ? "is-reached" : ""}`}
             aria-live="polite"
@@ -1095,7 +1235,7 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
                 <button
                   className="site-masterclass-submit"
                   type="submit"
-                  disabled={isSubmitting || participantCount < 1 || !eventState.registrationOpen}
+                  disabled={isSubmitting || participantCount < 1 || !registrationOpen}
                 >
                   {isSubmitting ? "Сохраняем..." : "Продолжить к оплате"}
                 </button>
@@ -1183,6 +1323,8 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
               </a>
             </section>
           ) : null}
+            </>
+          )}
         </aside>
       </div>
 
@@ -1215,12 +1357,13 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
           ))}
         </div>
         <small>
-          На встрече {EVENT.shortDateLabel} каждый приготовит одну пиццу:
-          {" "}{EVENT.pizzaAccusative}, а ещё смешает освежающий лимонад.
+          {isCancelled
+            ? `Это фотографии с других встреч. ${EVENT.shortDateLabel} мастер-класс не проводился, поэтому своих фото и видео у этой даты нет.`
+            : `На встрече ${EVENT.shortDateLabel} каждый приготовит одну пиццу: ${EVENT.pizzaAccusative}, а ещё смешает освежающий лимонад.`}
         </small>
       </section>
 
-      {stage !== "success" ? (
+      {!isCancelled && stage !== "success" ? (
         <div className="site-masterclass-mobile-action" aria-label="Быстрая запись на мастер-класс">
           <div aria-live="polite">
             <small>{stage === "payment" ? "К подтверждению" : `${participantCount} ${participantWord(participantCount)}`}</small>
@@ -1232,7 +1375,7 @@ export function SiteMasterClassPage({ event = DEFAULT_MASTERCLASS_EVENT }) {
             <button
               type="submit"
               form="masterclass-registration-form"
-              disabled={isSubmitting || participantCount < 1 || !eventState.registrationOpen}
+              disabled={isSubmitting || participantCount < 1 || !registrationOpen}
             >
               {isSubmitting ? "Сохраняем..." : "Продолжить к оплате"}
             </button>

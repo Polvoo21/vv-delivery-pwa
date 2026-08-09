@@ -1,3 +1,4 @@
+import "../../styles/site/product-modal.css";
 import { ChevronLeft, ImagePlus, Info, Maximize2, Minimize2, Minus, Plus, ShoppingBag, Star, Video, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatPrice, getProductOldPrice } from "../../utils/price";

@@ -1,6 +1,6 @@
 import { DELIVERY_MIN_ORDER_AMOUNT } from "../../../shared/order-rules";
 import { formatPrice } from "../../utils/price";
-import { RESTAURANT, getSiteOrderPath } from "./siteData";
+import { RESTAURANT, getSiteOrderPath } from "./siteCoreData";
 
 const seoCards = [
   {

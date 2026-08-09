@@ -1,3 +1,4 @@
+import "../../styles/site/checkout.css";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -17,6 +18,7 @@ import {
 import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../../shared/order-rules";
 import { evaluatePromoCart } from "../../../shared/promo-rules";
 import { apiPath } from "../../utils/api";
+import { METRIKA_GOALS, reachMetrikaGoal } from "../../utils/analytics";
 import {
   getDeliveryLoadMessage,
   getOrderTimingAvailability,
@@ -28,7 +30,8 @@ import { normalizePhone } from "../../utils/validators";
 import { getCartItemDetails, getCartItemImage, getStoredCartSummary, saveStoredPromo } from "./cartModel";
 import { fetchCurrentSiteCustomer, forgetSiteCustomer, rememberSiteCustomer } from "./customerSession";
 import { savePendingPayment } from "./paymentFlow";
-import { SiteAddressModal, readSiteFulfillment, saveSiteFulfillment } from "./SiteAddressFlow";
+import { SiteAddressModal } from "./SiteAddressFlow";
+import { readSiteFulfillment, saveSiteFulfillment } from "./siteFulfillment";
 import { SiteAuthModal } from "./SiteAuthModal";
 import { SITE_ONBOARDING_DEMO_MODE, SiteContactPhoneModal } from "./SiteContactPhoneModal";
 import { SiteFooter } from "./SiteFooter";
@@ -324,6 +327,13 @@ export function SiteCheckoutPage() {
   });
 
   useEffect(() => {
+    reachMetrikaGoal(METRIKA_GOALS.CHECKOUT_START, {
+      cart_total: Number(cartSummary.total || 0),
+      items_count: cartItems.reduce((sum, item) => sum + Number(item.qty || 0), 0)
+    });
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     fetchCurrentSiteCustomer().then((nextCustomer) => {
       if (cancelled) return;
@@ -566,6 +576,12 @@ export function SiteCheckoutPage() {
       paymentMode: yooKassaConfig.mode,
       cartItems,
       cartSummary
+    });
+    reachMetrikaGoal(METRIKA_GOALS.ORDER_CREATED, {
+      order_id: order.id,
+      order_total: Number(order.total || 0),
+      fulfillment: order.mode,
+      items_count: order.items.reduce((sum, item) => sum + Number(item.qty || 0), 0)
     });
     setStatus("Переходим к оплате...");
     window.location.href = "/payment";

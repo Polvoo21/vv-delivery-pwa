@@ -1,3 +1,4 @@
+import "../../styles/site/individual-masterclass.css";
 import { useEffect } from "react";
 import {
   ArrowLeft,

@@ -1,30 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import AddressScreen from "./components/AddressScreen";
-import AdminApp from "./components/AdminApp";
-import CartSheet from "./components/CartSheet";
-import CheckoutSheet from "./components/CheckoutSheet";
-import HomeScreen from "./components/HomeScreen";
-import InfoSheet from "./components/InfoSheet";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import MainSite from "./components/MainSite";
-import ProductModal from "./components/ProductModal";
-import ProfileSheet from "./components/ProfileSheet";
-import PromoCodeSheet from "./components/PromoCodeSheet";
-import PartnerApp from "./components/PartnerApp";
-import { LegalPage } from "./components/site/LegalPage";
-import { SiteCheckoutPage } from "./components/site/SiteCheckoutPage";
-import { SiteCustomerOrdersPage } from "./components/site/SiteCustomerOrdersPage";
-import { SiteDeliveryZonesPage } from "./components/site/SiteDeliveryZonesPage";
-import { SiteGalleryPage } from "./components/site/SiteGalleryPage";
-import { SiteLostItemsPage } from "./components/site/SiteLostItemsPage";
-import { SiteIndividualMasterclassPage } from "./components/site/SiteIndividualMasterclassPage";
-import { SiteMasterClassPage } from "./components/site/SiteMasterClassPage";
-import { SiteMasterclassesPage } from "./components/site/SiteMasterclassesPage";
-import { SiteNoGlovesPage } from "./components/site/SiteNoGlovesPage";
-import { SiteNotFoundPage } from "./components/site/SiteNotFoundPage";
-import { SitePaymentPage } from "./components/site/SitePaymentPage";
 import { getLegalDocument } from "./components/site/legalData";
-import SplashScreen from "./components/SplashScreen";
-import Toast from "./components/Toast";
 import { calculateCartTotals, formatPrice } from "./utils/price";
 import { showLocalNotification } from "./utils/notifications";
 import {
@@ -45,6 +21,62 @@ import {
   saveAppData
 } from "./utils/storage";
 import { syncSiteSeoHead } from "./utils/siteSeo";
+import { METRIKA_GOALS, reachMetrikaGoal } from "./utils/analytics";
+
+const AddressScreen = lazy(() => import("./components/AddressScreen"));
+const AdminApp = lazy(() => import("./components/AdminApp"));
+const CartSheet = lazy(() => import("./components/CartSheet"));
+const CheckoutSheet = lazy(() => import("./components/CheckoutSheet"));
+const HomeScreen = lazy(() => import("./components/HomeScreen"));
+const InfoSheet = lazy(() => import("./components/InfoSheet"));
+const ProductModal = lazy(() => import("./components/ProductModal"));
+const ProfileSheet = lazy(() => import("./components/ProfileSheet"));
+const PromoCodeSheet = lazy(() => import("./components/PromoCodeSheet"));
+const PartnerApp = lazy(() => import("./components/PartnerApp"));
+const SplashScreen = lazy(() => import("./components/SplashScreen"));
+const Toast = lazy(() => import("./components/Toast"));
+
+function lazyNamed(loader, exportName) {
+  return lazy(() => loader().then((module) => ({ default: module[exportName] })));
+}
+
+const LegalPage = lazyNamed(() => import("./components/site/LegalPage"), "LegalPage");
+const SiteCheckoutPage = lazyNamed(() => import("./components/site/SiteCheckoutPage"), "SiteCheckoutPage");
+const SiteCustomerOrdersPage = lazyNamed(
+  () => import("./components/site/SiteCustomerOrdersPage"),
+  "SiteCustomerOrdersPage"
+);
+const SiteDeliveryPage = lazyNamed(() => import("./components/site/SiteDeliveryPage"), "SiteDeliveryPage");
+const SiteDeliveryZonesPage = lazyNamed(
+  () => import("./components/site/SiteDeliveryZonesPage"),
+  "SiteDeliveryZonesPage"
+);
+const SiteGalleryPage = lazyNamed(() => import("./components/site/SiteGalleryPage"), "SiteGalleryPage");
+const SiteLostItemsPage = lazyNamed(() => import("./components/site/SiteLostItemsPage"), "SiteLostItemsPage");
+const SiteIndividualMasterclassPage = lazyNamed(
+  () => import("./components/site/SiteIndividualMasterclassPage"),
+  "SiteIndividualMasterclassPage"
+);
+const SiteMasterClassPage = lazyNamed(
+  () => import("./components/site/SiteMasterClassPage"),
+  "SiteMasterClassPage"
+);
+const SiteMasterclassesPage = lazyNamed(
+  () => import("./components/site/SiteMasterclassesPage"),
+  "SiteMasterclassesPage"
+);
+const SiteNoGlovesPage = lazyNamed(() => import("./components/site/SiteNoGlovesPage"), "SiteNoGlovesPage");
+const SiteNotFoundPage = lazyNamed(() => import("./components/site/SiteNotFoundPage"), "SiteNotFoundPage");
+const SitePaymentPage = lazyNamed(() => import("./components/site/SitePaymentPage"), "SitePaymentPage");
+
+function RouteLoadingFallback() {
+  return (
+    <main className="route-loading-fallback" aria-live="polite" aria-busy="true">
+      <span aria-hidden="true" />
+      <p>Загружаем страницу…</p>
+    </main>
+  );
+}
 
 function cloneInitialData() {
   return JSON.parse(JSON.stringify(initialAppData));
@@ -105,6 +137,12 @@ function ClientApp() {
     }));
     setActiveProduct(null);
     showToast("Добавлено в корзину");
+    reachMetrikaGoal(METRIKA_GOALS.ADD_TO_CART, {
+      product_id: item.productId || item.id || "",
+      product_name: item.name || "",
+      price: Number(item.unitPrice || item.price || 0),
+      quantity: Number(item.qty || 1)
+    });
   }
 
   function changeQty(uid, delta) {
@@ -317,6 +355,7 @@ export default function App() {
     pathname === "/dev/account/orders" ||
     pathname.startsWith("/dev/account/orders/");
   const isGalleryPath = pathname === "/gallery" || pathname === "/dev/gallery";
+  const isDeliveryInfoPath = pathname === "/dostavka" || pathname === "/dev/dostavka";
   const isDeliveryZonesPath = pathname === "/delivery-zones" || pathname === "/dev/delivery-zones";
   const isLostPath = pathname === "/lost" || pathname === "/dev/lost" || pathname === "/poteryashki" || pathname === "/dev/poteryashki";
   const isNoGlovesPath = pathname === "/bez-perchatok" || pathname === "/dev/bez-perchatok";
@@ -334,6 +373,7 @@ export default function App() {
     isCustomerOrdersPath ||
     isLegalPath ||
     isGalleryPath ||
+    isDeliveryInfoPath ||
     isDeliveryZonesPath ||
     isLostPath ||
     isNoGlovesPath ||
@@ -401,6 +441,11 @@ export default function App() {
       theme?.setAttribute("content", "#f1f3f6");
     } else if (isGalleryPath) {
       document.title = "Галерея | Вместе Вкуснее";
+      manifest?.setAttribute("href", "/site-manifest.json");
+      appleTitle?.setAttribute("content", "Вместе Вкуснее");
+      theme?.setAttribute("content", "#f1f3f6");
+    } else if (isDeliveryInfoPath) {
+      document.title = "Доставка пиццы и еды в Чебоксарах | Вместе Вкуснее";
       manifest?.setAttribute("href", "/site-manifest.json");
       appleTitle?.setAttribute("content", "Вместе Вкуснее");
       theme?.setAttribute("content", "#f1f3f6");
@@ -476,6 +521,7 @@ export default function App() {
     isCustomerOrdersPath,
     isLegalPath,
     isGalleryPath,
+    isDeliveryInfoPath,
     isDeliveryZonesPath,
     isLostPath,
     isNoGlovesPath,
@@ -487,24 +533,24 @@ export default function App() {
     seoPage
   ]);
 
-  if (isAdmin) return <AdminApp />;
-  if (isPartner) return <PartnerApp />;
-  if (isNotFoundPath) return <SiteNotFoundPage />;
-  if (isCheckoutPath) return <SiteCheckoutPage />;
-  if (isPaymentPath) return <SitePaymentPage />;
-  if (isCustomerOrdersPath) return <SiteCustomerOrdersPage />;
-  if (isLegalPath) return <LegalPage />;
-  if (isDeliveryZonesPath) return <SiteDeliveryZonesPage />;
-  if (isGalleryPath) return <SiteGalleryPage />;
-  if (isLostPath) return <SiteLostItemsPage />;
-  if (isNoGlovesPath) return <SiteNoGlovesPage />;
-  if (isIndividualMasterclassPath) {
-    return <SiteIndividualMasterclassPage />;
-  }
-  if (isMasterclassesPath) return <SiteMasterclassesPage />;
-  if (isMasterClassPath) {
-    return <SiteMasterClassPage event={masterclassEvent} />;
-  }
-  if (isSite && !isDelivery) return <MainSite />;
-  return <ClientApp />;
+  let route = <ClientApp />;
+
+  if (isAdmin) route = <AdminApp />;
+  else if (isPartner) route = <PartnerApp />;
+  else if (isNotFoundPath) route = <SiteNotFoundPage />;
+  else if (isCheckoutPath) route = <SiteCheckoutPage />;
+  else if (isPaymentPath) route = <SitePaymentPage />;
+  else if (isCustomerOrdersPath) route = <SiteCustomerOrdersPage />;
+  else if (isLegalPath) route = <LegalPage />;
+  else if (isDeliveryInfoPath) route = <SiteDeliveryPage />;
+  else if (isDeliveryZonesPath) route = <SiteDeliveryZonesPage />;
+  else if (isGalleryPath) route = <SiteGalleryPage />;
+  else if (isLostPath) route = <SiteLostItemsPage />;
+  else if (isNoGlovesPath) route = <SiteNoGlovesPage />;
+  else if (isIndividualMasterclassPath) route = <SiteIndividualMasterclassPage />;
+  else if (isMasterclassesPath) route = <SiteMasterclassesPage />;
+  else if (isMasterClassPath) route = <SiteMasterClassPage event={masterclassEvent} />;
+  else if (isSite && !isDelivery) route = <MainSite />;
+
+  return <Suspense fallback={<RouteLoadingFallback />}>{route}</Suspense>;
 }

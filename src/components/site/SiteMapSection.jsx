@@ -1,5 +1,5 @@
 import { Clock, MapPin, Navigation, Phone } from "lucide-react";
-import { ASSET, PHONE, RESTAURANT, SOCIAL_LINKS, telHref } from "./siteData";
+import { ASSET, PHONE, RESTAURANT, SOCIAL_LINKS, telHref } from "./siteCoreData";
 
 function getYandexMapWidgetUrl() {
   const { lat, lng } = RESTAURANT.coords;

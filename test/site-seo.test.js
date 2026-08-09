@@ -94,6 +94,92 @@ test("legacy and preview aliases resolve to canonical SEO data", () => {
   assert.equal(getSiteSeoPage("/not-an-indexable-page"), null);
 });
 
+test("answer-ready service pages expose direct facts in server HTML", () => {
+  for (const path of [
+    "/",
+    "/dostavka",
+    "/delivery-zones",
+    "/bez-perchatok",
+    "/master-klassy",
+    "/master-klassy/individualnyy-master-klass",
+    "/master-klassy/pizza-vetchina-griby-9-avgusta-2026",
+    "/master-klassy/pizza-vetchina-griby-16-avgusta-2026"
+  ]) {
+    const page = getSiteSeoPage(path);
+    assert.ok(page.answers.length >= 3, `${path} needs direct answer sections`);
+    const html = renderSeoDocument(INDEX_FIXTURE, page);
+    assert.match(html, /<h2 id="site-server-answers-title">Короткие ответы<\/h2>/);
+    assert.ok((html.match(/<h3>/g) || []).length >= 3, `${path} needs answer headings`);
+  }
+});
+
+test("homepage server HTML can render current menu prices from the production catalog", () => {
+  const html = renderSeoDocument(
+    INDEX_FIXTURE,
+    getSiteSeoPage("/"),
+    undefined,
+    {
+      catalog: {
+        categories: [{ id: "pizza", title: "Пиццы" }],
+        products: [
+          { id: "margarita", category: "pizza", name: "Маргарита", weight: "400 г", price: 830 }
+        ]
+      }
+    }
+  );
+
+  assert.match(html, /<h2 id="site-server-menu-title">Актуальное меню и цены<\/h2>/);
+  assert.match(html, /Маргарита, 400 г/);
+  assert.match(html, /<data value="830">830 ₽<\/data>/);
+});
+
+test("homepage SSR keeps one H1 and preserves answer-ready supplemental content", () => {
+  const html = renderSeoDocument(
+    INDEX_FIXTURE,
+    getSiteSeoPage("/"),
+    undefined,
+    { appHtml: '<main class="site-showcase"><h1>Семейная итальянская пиццерия в Чебоксарах</h1></main>' }
+  );
+
+  assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1);
+  assert.match(html, /site-server-seo-supplement/);
+  assert.match(html, /<h2 id="site-server-answers-title">Короткие ответы<\/h2>/);
+  assert.doesNotMatch(html, /masterclass-promo-hero-480\.avif"[\s\S]*media="\(max-width: 640px\)"/);
+});
+
+test("delivery and kitchen schemas describe services and cited sanitary sources", () => {
+  const delivery = getSiteSeoPage("/dostavka");
+  const deliverySchema = JSON.parse(
+    renderSeoDocument(INDEX_FIXTURE, delivery).match(
+      /<script id="site-schema" type="application\/ld\+json">([\s\S]*?)<\/script>/
+    )[1]
+  );
+  const deliveryNode = deliverySchema["@graph"].find(
+    (node) => node["@id"] === `${delivery.canonicalUrl}#webpage`
+  );
+  assert.equal(deliveryNode["@type"], "Service");
+  assert.equal(deliveryNode.serviceType, "Доставка еды и самовывоз");
+  assert.equal(deliveryNode.provider["@id"], "https://vmestevkusnee.ru/#restaurant");
+
+  const kitchen = getSiteSeoPage("/bez-perchatok");
+  const kitchenSchema = JSON.parse(
+    renderSeoDocument(INDEX_FIXTURE, kitchen).match(
+      /<script id="site-schema" type="application\/ld\+json">([\s\S]*?)<\/script>/
+    )[1]
+  );
+  const articleNode = kitchenSchema["@graph"].find(
+    (node) => node["@id"] === `${kitchen.canonicalUrl}#webpage`
+  );
+  assert.equal(articleNode.dateModified, "2026-08-08");
+  assert.deepEqual(articleNode.citation, kitchen.sources.map((source) => source.href));
+});
+
+test("robots policy allows ChatGPT search and opts out of model-training crawl", async () => {
+  const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
+  assert.match(robots, /User-agent: OAI-SearchBot[\s\S]*?Allow: \//);
+  assert.match(robots, /User-agent: GPTBot\s+Disallow: \/(?:\s|$)/);
+});
+
 test("homepage schema links the verified restaurant, organization, website, and order methods", () => {
   const homepage = getSiteSeoPage("/");
   const schema = JSON.parse(

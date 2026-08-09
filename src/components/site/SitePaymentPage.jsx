@@ -1,7 +1,9 @@
+import "../../styles/site/checkout.css";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, CreditCard, ExternalLink, LockKeyhole, ShieldCheck } from "lucide-react";
 import { DELIVERY_MIN_ORDER_AMOUNT, getDeliveryMinimumRemaining } from "../../../shared/order-rules";
 import { apiPath } from "../../utils/api";
+import { METRIKA_GOALS, reachMetrikaGoal } from "../../utils/analytics";
 import { subscribeForOrderPush } from "../../utils/notifications";
 import { formatPrice } from "../../utils/price";
 import { getCartItemDetails, getCartItemImage, saveStoredCart, saveStoredPromo } from "./cartModel";
@@ -105,6 +107,11 @@ export function SitePaymentPage() {
     const nextPending = pending
       ? savePendingPayment({ ...pending, order: completedOrder })
       : null;
+    reachMetrikaGoal(METRIKA_GOALS.PAYMENT_SUCCESS, {
+      order_id: completedOrder.id || "",
+      order_total: Number(completedOrder.total || 0),
+      fulfillment: completedOrder.mode || ""
+    });
     if (nextPending) setPending(nextPending);
     saveCurrentCustomerOrder(completedOrder);
     saveStoredCart([]);
@@ -210,6 +217,11 @@ export function SitePaymentPage() {
       }
       if (!data.paymentUrl) throw new Error("ЮKassa не вернула ссылку оплаты");
 
+      reachMetrikaGoal(METRIKA_GOALS.PAYMENT_START, {
+        order_id: data.order?.id || data.orderId || pending.order.id || "",
+        order_total: Number(data.order?.total || pending.order.total || 0),
+        fulfillment: data.order?.mode || pending.order.mode || ""
+      });
       setStatus("Открываем защищенную форму ЮKassa...");
       window.location.href = data.paymentUrl;
     } catch (error) {

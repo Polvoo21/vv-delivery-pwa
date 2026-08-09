@@ -155,18 +155,20 @@ import {
   isYooKassaConfigured
 } from "./yookassa.js";
 import {
+  assertMasterclassPaymentOpen,
   attachMasterclassPayment,
   createMasterclassRegistration,
   getMasterclassPaymentRegistration,
   getMasterclassState,
   markMasterclassPaymentCreateFailed,
-  MASTERCLASS_EVENT,
   prepareMasterclassPaymentRetry,
   syncMasterclassPayment
 } from "./masterclass.js";
 import {
+  getMasterclassEventByPath,
   INDIVIDUAL_MASTERCLASS_PATH,
   MASTERCLASSES_PATH,
+  MASTERCLASS_EVENTS,
   SITE_ORIGIN
 } from "../shared/masterclass-events.js";
 import {
@@ -192,6 +194,9 @@ import {
   createSpaFallbackHandler
 } from "./site-routing.js";
 import { buildDefaultPageSchema, renderSeoDocument } from "./site-seo.js";
+import { setStaticCacheHeaders } from "./cache-headers.js";
+import { renderHomeApp } from "./home-renderer.js";
+import { inlineHomeStyles } from "./home-styles.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
@@ -775,6 +780,8 @@ app.post(
       if (registration.paymentStatus === "paid") {
         return response.json({ ok: true, paid: true, registration: publicMasterclassPaymentState(registration) });
       }
+
+      assertMasterclassPaymentOpen(eventId);
 
       if (registration.paymentId) {
         const synced = await syncYooKassaMasterclass(registration, "payment.customer_retried");
@@ -2469,17 +2476,32 @@ app.get("/api/partners/me", requirePartner, async (request, response) => {
 });
 
 app.use(canonicalRedirectMiddleware);
-app.use(express.static(distDir, { index: false }));
+app.use(express.static(distDir, {
+  index: false,
+  setHeaders: setStaticCacheHeaders
+}));
 
 app.get(/^\/admin(?:\/.*)?$/, (_request, response) => {
+  response.set("Cache-Control", "no-cache");
   response.sendFile(path.join(distDir, "admin.html"));
 });
 
-async function sendSeoPage(response, next, page, schema = buildDefaultPageSchema(page)) {
+async function sendSeoPage(
+  response,
+  next,
+  page,
+  schema = buildDefaultPageSchema(page),
+  renderOptions = {}
+) {
   try {
-    const indexPath = path.join(distDir, "index.html");
+    const indexPath = path.join(distDir, page.path === "/" ? "home.html" : "index.html");
     const source = await readFile(indexPath, "utf8");
-    return response.type("html").send(renderSeoDocument(source, page, schema));
+    const documentSource = page.path === "/" ? await inlineHomeStyles(source, distDir) : source;
+    const appHtml = page.path === "/" ? await renderHomeApp() : "";
+    response.set("Cache-Control", "no-cache");
+    return response.type("html").send(
+      renderSeoDocument(documentSource, page, schema, { ...renderOptions, appHtml })
+    );
   } catch (error) {
     return next(error);
   }
@@ -2489,7 +2511,17 @@ app.get(
   STATIC_SITE_SEO_PAGES.map((page) => page.path),
   async (request, response, next) => {
     const page = getSiteSeoPage(request.path);
-    return sendSeoPage(response, next, page);
+    let catalog = null;
+
+    if (page.path === "/") {
+      try {
+        catalog = await listPublicCatalog();
+      } catch {
+        // Страница остаётся доступной, даже если каталог временно не отвечает.
+      }
+    }
+
+    return sendSeoPage(response, next, page, buildDefaultPageSchema(page), { catalog });
   }
 );
 
@@ -2600,50 +2632,61 @@ app.get(
   }
 );
 
-const masterclassEventPaths = [
-  MASTERCLASS_EVENT.path,
-  `/dev${MASTERCLASS_EVENT.path}`,
-  ...MASTERCLASS_EVENT.legacyPaths,
-  ...MASTERCLASS_EVENT.legacyPaths.map((eventPath) => `/dev${eventPath}`)
-];
+const masterclassEventPaths = MASTERCLASS_EVENTS.flatMap((event) => [
+  event.path,
+  `/dev${event.path}`,
+  ...event.legacyPaths,
+  ...event.legacyPaths.map((eventPath) => `/dev${eventPath}`)
+]);
 
 app.get(masterclassEventPaths, async (request, response, next) => {
+  const masterclassEvent = getMasterclassEventByPath(request.path);
+  if (!masterclassEvent) return next();
+
   const page = getSiteSeoPage(request.path);
   const { title, description, canonicalUrl, imageUrl } = page;
+  const eventSchema = {
+    "@type": "Event",
+    name: masterclassEvent.title,
+    description,
+    startDate: masterclassEvent.startsAt,
+    eventStatus:
+      masterclassEvent.status === "cancelled"
+        ? "https://schema.org/EventCancelled"
+        : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      name: "Семейная пиццерия «Вместе Вкуснее»",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Чебоксары",
+        streetAddress: "улица Пирогова, 1Т",
+        addressCountry: "RU"
+      }
+    },
+    image: [imageUrl],
+    organizer: {
+      "@type": "Restaurant",
+      name: "Вместе Вкуснее",
+      url: SITE_ORIGIN
+    }
+  };
+
+  if (masterclassEvent.pageMode === "registration") {
+    eventSchema.offers = {
+      "@type": "Offer",
+      price: String(masterclassEvent.pricePerParticipant),
+      priceCurrency: "RUB",
+      url: canonicalUrl,
+      availability: "https://schema.org/InStock"
+    };
+  }
+
   const schema = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "Event",
-        name: MASTERCLASS_EVENT.title,
-        description,
-        startDate: MASTERCLASS_EVENT.startsAt,
-        eventStatus: "https://schema.org/EventScheduled",
-        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-        location: {
-          "@type": "Place",
-          name: "Семейная пиццерия «Вместе Вкуснее»",
-          address: {
-            "@type": "PostalAddress",
-            addressLocality: "Чебоксары",
-            streetAddress: "улица Пирогова, 1Т",
-            addressCountry: "RU"
-          }
-        },
-        image: [imageUrl],
-        offers: {
-          "@type": "Offer",
-          price: String(MASTERCLASS_EVENT.pricePerParticipant),
-          priceCurrency: "RUB",
-          url: canonicalUrl,
-          availability: "https://schema.org/InStock"
-        },
-        organizer: {
-          "@type": "Restaurant",
-          name: "Вместе Вкуснее",
-          url: SITE_ORIGIN
-        }
-      },
+      eventSchema,
       {
         "@type": "BreadcrumbList",
         itemListElement: [
@@ -2662,7 +2705,7 @@ app.get(masterclassEventPaths, async (request, response, next) => {
           {
             "@type": "ListItem",
             position: 3,
-            name: MASTERCLASS_EVENT.cardTitle,
+            name: masterclassEvent.cardTitle,
             item: canonicalUrl
           }
         ]

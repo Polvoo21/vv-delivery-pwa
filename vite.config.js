@@ -9,7 +9,23 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: "index.html",
-        admin: "admin.html"
+        admin: "admin.html",
+        home: "home.html"
+      },
+      output: {
+        manualChunks(id) {
+          const normalizedId = id.replaceAll("\\", "/");
+
+          if (
+            normalizedId.endsWith("/src/data/menu.js") ||
+            normalizedId.endsWith("/src/data/productNutrition.js") ||
+            normalizedId.endsWith("/src/data/productImages.js")
+          ) {
+            return "catalog-data";
+          }
+
+          return undefined;
+        }
       }
     }
   }

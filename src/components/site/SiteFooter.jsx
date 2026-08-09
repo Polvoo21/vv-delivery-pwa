@@ -1,5 +1,5 @@
 import { INDIVIDUAL_MASTERCLASS_PATH } from "../../../shared/masterclass-events";
-import { PARTNERS_URL, PHONE, RESTAURANT, SOCIAL_LINKS, getSiteOrderPath, telHref } from "./siteData";
+import { PARTNERS_URL, PHONE, RESTAURANT, SOCIAL_LINKS, getSiteOrderPath, telHref } from "./siteCoreData";
 import { LEGAL_ENTITY, legalDocuments } from "./legalData";
 
 const footerStats = [
@@ -42,7 +42,7 @@ function getFooterLinkGroups() {
       title: "Гостям",
       links: [
         { label: "Меню", href: siteHref("#menu") },
-        { label: "Доставка и самовывоз", href: getSiteOrderPath() },
+        { label: "Доставка и самовывоз", href: sitePageHref("/dostavka") },
         { label: "Зоны доставки", href: sitePageHref("/delivery-zones") },
         { label: "Мастер-классы", href: sitePageHref("/master-klassy") },
         {
@@ -149,6 +149,7 @@ export function SiteFooter() {
             <a href="/legal/offer">Публичная оферта</a>
             <a href="/legal/privacy">Политика ПДн</a>
             <a href="/legal/cookies">Cookies</a>
+            <a href={sitePageHref("/dostavka")}>Доставка и самовывоз</a>
             <a href={sitePageHref("/delivery-zones")}>Зоны доставки</a>
             <a href="/legal/nutrition">Калорийность и состав</a>
           </div>

@@ -1,3 +1,4 @@
+import "../../styles/site/lost-items.css";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CalendarDays, Clock3, MessageCircle, Phone, Send, X } from "lucide-react";
 import { SiteFooter } from "./SiteFooter";

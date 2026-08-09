@@ -24,7 +24,10 @@ export default function MapPicker({ mode, coords, onCoordsChange, onAddressChang
     let cancelled = false;
 
     async function initMap() {
-      const leaflet = await import("leaflet");
+      const [leaflet] = await Promise.all([
+        import("leaflet"),
+        import("leaflet/dist/leaflet.css")
+      ]);
       if (cancelled || !mapNode.current || mapRef.current) return;
 
       leafletRef.current = leaflet;

@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Activity, Clock3, Menu, MessageCircle, Phone, ShoppingBag, Star, UserRound, X } from "lucide-react";
 import { getDeliveryEtaLabel, getDeliveryLoadLabel } from "../../utils/deliveryTiming";
 import { formatPrice } from "../../utils/price";
-import { ASSET, PHONE, SOCIAL_LINKS, getSiteHomePath, headerLinks, telHref } from "./siteData";
+import { ASSET, PHONE, SOCIAL_LINKS, getSiteHomePath, headerLinks, telHref } from "./siteCoreData";
 
 function getHeaderLinkHref(href) {
   if (!href?.startsWith("#")) {

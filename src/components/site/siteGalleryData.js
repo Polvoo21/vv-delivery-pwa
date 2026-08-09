@@ -1,4 +1,4 @@
-import { ASSET } from "./siteData";
+import { ASSET } from "./siteCoreData";
 
 export const siteGalleryPhotos = [
   {

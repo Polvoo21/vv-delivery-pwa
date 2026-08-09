@@ -1,3 +1,4 @@
+import "../../styles/site/not-found.css";
 import { ArrowRight, Home, MapPin } from "lucide-react";
 import { SiteFooter } from "./SiteFooter";
 import { SitePublicShell } from "./SitePublicShell";
@@ -31,4 +32,3 @@ export function SiteNotFoundPage() {
     </SitePublicShell>
   );
 }
-

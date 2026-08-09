@@ -35,20 +35,36 @@ export function SiteGalleryPage() {
         </div>
 
         <div className="site-gallery-page-grid" aria-label="Фотографии и видео пиццерии">
-          {videos.map((item) => (
+          {videos.map((item, index) => (
             <article className={`site-gallery-page-video is-${getMediaShape(item)}`} key={item.id || item.title}>
-              <img src={item.poster} alt="" loading="lazy" />
+              <img
+                src={item.poster}
+                alt=""
+                loading={index < 4 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
+                decoding="async"
+              />
               <span>
                 <Play size={20} fill="currentColor" />
               </span>
             </article>
           ))}
 
-          {photos.map((item) => (
+          {photos.map((item, index) => {
+            const mediaIndex = videos.length + index;
+
+            return (
             <article className={`site-gallery-page-photo is-${getMediaShape(item)}`} key={item.id || item.title}>
-              <img src={item.image} alt={item.title} loading="lazy" />
+              <img
+                src={item.image}
+                alt={item.title}
+                loading={mediaIndex < 4 ? "eager" : "lazy"}
+                fetchPriority={mediaIndex === 0 ? "high" : "auto"}
+                decoding="async"
+              />
             </article>
-          ))}
+            );
+          })}
         </div>
       </section>
 

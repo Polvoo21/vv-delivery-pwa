@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
-import { RESTAURANT } from "./siteData";
+import { RESTAURANT } from "./siteCoreData";
 
 const faqItems = [
   {

@@ -1,0 +1,37 @@
+/* Stable full-viewport placeholder while a route-specific JavaScript chunk loads. */
+.route-loading-fallback {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  margin: 0;
+  background: #f7f8fa;
+  color: #34312d;
+  font: 700 15px/1.4 system-ui, sans-serif;
+}
+
+.route-loading-fallback > span {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #dfe2e5;
+  border-top-color: #ca7767;
+  border-radius: 50%;
+  animation: route-loading-spin 700ms linear infinite;
+}
+
+.route-loading-fallback > p {
+  margin: 0;
+}
+
+@keyframes route-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-loading-fallback > span {
+    animation: none;
+  }
+}

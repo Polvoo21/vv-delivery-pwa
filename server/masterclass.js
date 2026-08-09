@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { pool } from "./db.js";
 import {
   getMasterclassEventById,
+  isMasterclassRegistrationOpen,
   MASTERCLASS_EVENT,
   MASTERCLASS_EVENTS
 } from "../shared/masterclass-events.js";
@@ -129,6 +130,16 @@ function assertKnownEvent(eventId) {
   return masterclassEvent;
 }
 
+export function assertMasterclassPaymentOpen(eventId, referenceDate = new Date()) {
+  const masterclassEvent = assertKnownEvent(eventId);
+
+  if (!isMasterclassRegistrationOpen(masterclassEvent, referenceDate)) {
+    throw registrationError("Оплата этого мастер-класса закрыта", 409);
+  }
+
+  return masterclassEvent;
+}
+
 function publicRegistration(row) {
   return {
     id: row.public_id,
@@ -180,19 +191,14 @@ export async function getMasterclassState(eventId = MASTERCLASS_EVENT.id) {
     registrations: Number(result.rows[0]?.registrations || 0),
     remainingParticipants,
     minimumReached: remainingParticipants === 0,
-    registrationOpen:
-      masterclassEvent.pageMode === "registration" &&
-      new Date() < new Date(masterclassEvent.startsAt)
+    registrationOpen: isMasterclassRegistrationOpen(masterclassEvent)
   };
 }
 
 export async function createMasterclassRegistration(eventId, body = {}, requestMeta = {}) {
   const masterclassEvent = assertKnownEvent(eventId);
 
-  if (
-    masterclassEvent.pageMode !== "registration" ||
-    new Date() >= new Date(masterclassEvent.startsAt)
-  ) {
+  if (!isMasterclassRegistrationOpen(masterclassEvent)) {
     throw registrationError("Запись на этот мастер-класс уже закрыта", 409);
   }
 

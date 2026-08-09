@@ -1,3 +1,4 @@
+import "../../styles/site/delivery-zones.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin, Navigation } from "lucide-react";
 import { DELIVERY_MIN_ORDER_AMOUNT } from "../../../shared/order-rules";
@@ -20,7 +21,10 @@ function SiteDeliveryZonesMap({ zones, onError }) {
     let cancelled = false;
 
     async function initMap() {
-      const leaflet = await import("leaflet");
+      const [leaflet] = await Promise.all([
+        import("leaflet"),
+        import("leaflet/dist/leaflet.css")
+      ]);
       if (cancelled || !mapNodeRef.current || mapRef.current) return;
 
       const pizzeriaIcon = leaflet.divIcon({

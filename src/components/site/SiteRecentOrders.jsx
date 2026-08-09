@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, ChevronDown, Clock3, CopyPlus, ShoppingBag, X } from "lucide-react";
 import { formatPrice } from "../../utils/price";
-import { pluralRu } from "./siteData";
+import { pluralRu } from "./siteCoreData";
 
 const INITIAL_VISIBLE_ORDERS = 3;
 const MAX_VISIBLE_ORDERS = 10;

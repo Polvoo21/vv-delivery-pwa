@@ -1,5 +1,7 @@
 import {
   INDIVIDUAL_MASTERCLASS_PATH,
+  LATEST_MASTERCLASS_PATH,
+  MASTERCLASS_EVENT,
   MASTERCLASSES_PATH,
   MASTERCLASS_EVENTS
 } from "./masterclass-events.js";
@@ -23,6 +25,7 @@ export const LEGAL_ROUTE_PATHS = Object.freeze([
 const PUBLIC_ROUTE_PATHS = [
   "/",
   "/gallery",
+  "/dostavka",
   "/delivery-zones",
   "/lost",
   "/bez-perchatok",
@@ -48,6 +51,7 @@ const APP_ROUTE_SET = new Set(APP_ROUTE_PATHS);
 const LEGACY_REDIRECTS = new Map([
   ["/site", "/"],
   ["/poteryashki", "/lost"],
+  [LATEST_MASTERCLASS_PATH, MASTERCLASS_EVENT.path],
   ...MASTERCLASS_EVENTS.flatMap((event) =>
     event.legacyPaths.map((legacyPath) => [legacyPath, event.path])
   )

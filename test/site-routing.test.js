@@ -29,7 +29,7 @@ test("canonical route redirects cover aliases and duplicate slashes", () => {
   assert.deepEqual(getRouteRedirect("/site/old-page"), { status: 301, target: "/" });
   assert.deepEqual(getRouteRedirect("/master-klass-pizza"), {
     status: 301,
-    target: "/master-klassy/pizza-vetchina-griby-9-avgusta-2026"
+    target: "/master-klassy/pizza-vetchina-griby-16-avgusta-2026"
   });
   assert.deepEqual(getRouteRedirect("/gallery/"), { status: 308, target: "/gallery" });
   assert.deepEqual(getRouteRedirect("//delivery-zones//"), {
@@ -41,6 +41,7 @@ test("canonical route redirects cover aliases and duplicate slashes", () => {
 
 test("known route registry distinguishes public, app, and missing paths", () => {
   assert.equal(isKnownPublicPath("/gallery"), true);
+  assert.equal(isKnownPublicPath("/dostavka"), true);
   assert.equal(isKnownPublicPath("/checkout"), false);
   assert.equal(isKnownFrontendPath("/checkout"), true);
   assert.equal(isKnownFrontendPath("/account/orders/123"), true);

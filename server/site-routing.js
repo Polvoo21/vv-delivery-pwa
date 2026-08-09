@@ -55,15 +55,16 @@ export function createSpaFallbackHandler({ distDir }) {
 
   return async function spaFallbackHandler(request, response, next) {
     if (isKnownFrontendPath(request.path)) {
+      response.set("Cache-Control", "no-cache");
       return response.sendFile(indexPath);
     }
 
     try {
       const source = await readFile(indexPath, "utf8");
+      response.set("Cache-Control", "no-cache");
       return response.status(404).type("html").send(renderNotFoundHtml(source));
     } catch (error) {
       return next(error);
     }
   };
 }
-

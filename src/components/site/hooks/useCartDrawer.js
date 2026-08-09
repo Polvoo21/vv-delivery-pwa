@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CART_DRAWER_EXIT_MS } from "../siteData";
+import { CART_DRAWER_EXIT_MS } from "../siteCoreData";
 
 export function useCartDrawer(onOpen) {
   const timerRef = useRef(null);

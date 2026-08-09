@@ -1,6 +1,6 @@
 import { calculateCartTotals } from "../../utils/price";
-import { PRICING_POLICY_VERSION } from "../../data/config";
-import { DELIVERY_STORAGE_KEY, emptyCartSummary, getCategoryVisual } from "./siteData";
+import { PRICING_POLICY_VERSION } from "../../data/pricing-policy";
+import { DELIVERY_STORAGE_KEY, emptyCartSummary, getCategoryVisual } from "./siteCoreData";
 
 export function getStoredCartSummary() {
   if (typeof window === "undefined") {
